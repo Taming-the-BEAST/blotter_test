@@ -1,6 +1,7 @@
 name: Taming the BEAST
 description: BEAST2 tutorials for the community, by the community!
-url: https://taming-the-beast.org/
+baseurl: "/web-testing"
+url: "https://taming-the-beast.org"
 
 permalink: /:categories/:title/
 future: true
