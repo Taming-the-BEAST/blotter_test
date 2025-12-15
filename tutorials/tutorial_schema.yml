@@ -1,0 +1,131 @@
+# Tutorial Metadata Schema for Taming the BEAST
+# This file defines the valid values and structure for tutorial metadata
+
+# Valid experience levels
+# levels:
+#   - Beginner
+#   - Intermediate
+#   - Professional
+
+# Valid tutorial types
+tutorial_types:
+  - Core              # Core BEAST2 functionality tutorials
+  - Model-specific    # Tutorials focused on specific models/packages
+  - Applied           # Application-focused tutorials (domain-specific)
+
+# Valid status values
+status_values:
+  - current           # Active, up-to-date tutorial
+  - legacy            # Outdated but kept for reproducibility
+
+# Recommended keyword taxonomy (extensible)
+keyword_taxonomy:
+  models:
+    - coalescent
+    - birth-death
+    - structured coalescent
+    - multispecies coalescent
+    - fossilized birth-death
+    - skyline
+    - constant population
+    
+  features:
+    - molecular clock
+    - relaxed clock
+    - strict clock
+    - tip dating
+    - calibration
+    - substitution models
+    - site models
+    - phylogeography
+    - migration
+    - population structure
+    
+  methods:
+    - Bayesian inference
+    - MCMC
+    - model selection
+    - marginal likelihood
+    - path sampling
+    - parameter estimation
+    
+  workflows:
+    - getting started
+    - basic workflow
+    - advanced analysis
+    - troubleshooting
+    - validation
+    
+  data_types:
+    - nucleotide
+    - amino acid
+    - morphological
+    - trait data
+    - ancient DNA
+
+# Known BEAST2 packages
+packages:
+  - BDSKY              # Birth-Death Skyline
+  - MASCOT             # Marginal Approximation of Structured Coalescent
+  - MultiTypeTree      # MTT - Structured coalescent
+  - StarBeast          # Multispecies coalescent (legacy)
+  - StarBeast2         # Multispecies coalescent (BEAST 2.6)
+  - StarBeast3         # Multispecies coalescent (BEAST 2.7+)
+  - SA                 # Sampled Ancestors
+  - SCOTTI             # Structured Coalescent Transmission Tree Inference
+  - Bacter             # Bacterial recombination
+  - BEAST-CLASSIC      # BEAST 1.x features in BEAST 2
+  - BEASTLabs          # Experimental features
+  - CoupledMCMC        # Parallel tempering
+  - feast              # Phylodynamic inference
+  - MODEL_SELECTION    # Model selection tools
+  - ORC                # Optimised Relaxed Clock
+  - substBMA           # Substitution model averaging
+
+# Application domains
+domains:
+  - general
+  - virology
+  - epidemiology
+  - phylogeography
+  - palaeontology
+  - speciation
+  - population genetics
+  - language evolution
+  - macroevolution
+
+# Required fields
+required_fields:
+  - author
+  # - level
+  - title
+  - beastversion
+  - tutorial_type
+  - status
+
+# Recommended fields
+recommended_fields:
+  - subtitle
+  - keywords
+  - packages
+  
+# Optional fields
+optional_fields:
+  - domains
+  - legacy_reason
+  - legacy_alternative
+  - related_tutorials
+  - prerequisites
+  - estimated_time
+
+# Validation rules
+validation_rules:
+  keywords:
+    min: 3              # Minimum number of keywords
+    max: 10             # Maximum number of keywords
+  packages:
+    min: 0
+    max: 5
+  legacy:
+    requires:           # If status is "legacy", these fields are required
+      - legacy_reason
