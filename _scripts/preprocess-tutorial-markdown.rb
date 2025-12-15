@@ -1,4 +1,8 @@
 require 'yaml'
+require_relative 'validate_tutorial_metadata'
+
+# Load validator
+VALIDATOR = TutorialMetadataValidator.new('tutorials/tutorial_schema.yml')
 
 # Preprocessing script
 # Run before `jekyll build` to walk through directories and add YAML front matter to Markdown files
@@ -50,6 +54,15 @@ mdarray.each { |md|
 
 		header   = YAML.load(contents[0..pos[0]])
 		contents = contents[pos[0]..-1]
+
+		# VALIDATE METADATA
+  		if (tutorial_name != nil)
+			validation_result = VALIDATOR.validate(header)
+			unless validation_result[:valid]
+			puts "  WARNING: #{tutorial_name} has validation errors:"
+			validation_result[:errors].each { |e| puts "    - #{e}" }
+			end
+		end
 
 		if (tutorial_name != nil)
 			header["layout"] = "tutorial"
