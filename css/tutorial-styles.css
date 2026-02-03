@@ -194,6 +194,50 @@
   color: #856404;
 }
 
+/* Checkbox styling - restore default appearance */
+.filter-group input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.filter-group label {
+  cursor: pointer;
+}
+
+/* Pagefind search customization */
+#pagefind-search {
+  min-height: 45px;
+}
+
+#pagefind-search .pagefind-ui__search-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+}
+
+/* Fallback when Pagefind is not available */
+.search-fallback {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  transition: border-color 0.3s;
+}
+
+.search-fallback:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .tutorial-grid {

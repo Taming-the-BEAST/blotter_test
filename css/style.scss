@@ -5,20 +5,16 @@ $primary: #DD2D2D;
 
 
 $line-height-base: 1.6;
-$navbar-height: 100px;
-$navbar-margin-bottom: 30px;
 $code-color: #586E75;
 $pre-color: #586E75;
-$well-bg: #f8f8f8;
-$code-bg: #f8f8f8;
-$pre-bg: #f8f8f8;  
 $body-bg: white;
-$navbar-default-bg: #f8f8f8;
-$navbar-default-border: #e7e7e7;
-$blockquote-bg: #eeeef8;  
-$nav-pills-active-link-hover-bg: $navbar-default-bg;
 $nav-pills-link-active-color: black;
-$nav-pills-link-active-bg: $navbar-default-bg;
+
+// Custom variables (used in this file)
+$navbar-custom-bg: #f8f8f8;
+$navbar-custom-border: #e7e7e7;
+$blockquote-bg: #eeeef8;
+$nav-pills-link-active-bg: $navbar-custom-bg;
 
 $font-size-base: 1rem;
 
@@ -31,6 +27,31 @@ h6, .h6 { font-size: ceil($font-size-base * 0.85); }  /* ~12px */
 
 @import "../bootstrap/scss/bootstrap";
 
+
+/* Container and layout spacing */
+.container {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+@media (min-width: 992px) {
+    .container {
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+}
+
+#header .navbar {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+@media (min-width: 992px) {
+    #header .navbar {
+        padding-left: 50px;
+        padding-right: 50px;
+    }
+}
 
 /* general */
 
@@ -79,8 +100,8 @@ a:hover {
 /* navbar */
 
 #header {
-    background-color: $navbar-default-bg;
-    border-bottom: 1px solid $navbar-default-border;
+    background-color: $navbar-custom-bg;
+    border-bottom: 1px solid $navbar-custom-border;
 }
 
 
@@ -98,7 +119,37 @@ a:hover {
 }
 
 a.nav-link {
+    color: #777777;
+    text-decoration: none;
+}
+
+a.nav-link:hover {
     color: $gray-900;
+    text-decoration: none;
+}
+
+/* Bootstrap 4 media component (removed in Bootstrap 5) */
+.media {
+    display: flex;
+    align-items: flex-start;
+}
+
+.media-body {
+    flex: 1;
+}
+
+.media-object {
+    display: block;
+}
+
+.pull-left {
+    float: left;
+    margin-right: 15px;
+}
+
+.pull-right {
+    float: right;
+    margin-left: 15px;
 }
 
 /* headings */
@@ -340,8 +391,8 @@ figcaption {
 	height: 95px;
 	padding-top: 10px;
 	border: 1px solid transparent;
-	border-color: $navbar-default-border;
-	background-color: $navbar-default-bg;
+	border-color: $navbar-custom-border;
+	background-color: $navbar-custom-bg;
 }
 
 .footernav {
@@ -350,7 +401,7 @@ figcaption {
     text-align: center;
     margin-right: 2px;
     border: none;
-    background-color: $navbar-default-bg;
+    background-color: $navbar-custom-bg;
 }
 
 

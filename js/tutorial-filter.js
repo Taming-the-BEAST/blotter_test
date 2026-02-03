@@ -16,7 +16,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     loadFiltersFromURL();
     setupFilterButtons();
-    setupPagefind();
+    setupSearch();
     setupLegacyToggle();
     applyFilters();
   });
@@ -39,51 +39,59 @@
     });
   }
 
-  function setupPagefind() {
-    // Initialize Pagefind UI
-    if (typeof PagefindUI === 'undefined') {
-      console.warn('Pagefind UI not loaded. Search will not be available.');
-      return;
+  function setupSearch() {
+    // Setup fallback search input
+    const searchInput = document.getElementById('tutorial-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        filters.search = this.value.toLowerCase();
+        applyFilters();
+      });
     }
 
-    pagefindUI = new PagefindUI({
-      element: "#pagefind-search",
-      showSubResults: true,
-      showImages: false,
-      excerptLength: 15,
-      processResult: function(result) {
-        // Store the result URL for filtering
-        if (result.url) {
-          searchResults.add(result.url);
+    // Also try to initialize Pagefind UI if available
+    if (typeof PagefindUI !== 'undefined') {
+      const pagefindContainer = document.getElementById('pagefind-search');
+      if (pagefindContainer) {
+        pagefindContainer.style.display = 'block';
+        // Hide fallback search if Pagefind loads
+        if (searchInput) {
+          searchInput.style.display = 'none';
         }
-        return result;
-      }
-    });
 
-    // Listen for search events
-    const searchContainer = document.getElementById('pagefind-search');
-    if (searchContainer) {
-      // Watch for input changes in Pagefind's search box
-      const observer = new MutationObserver(function() {
-        const pagefindInput = searchContainer.querySelector('input[type="text"]');
-        if (pagefindInput && !pagefindInput.dataset.listenerAdded) {
-          pagefindInput.dataset.listenerAdded = 'true';
-          pagefindInput.addEventListener('input', function() {
-            filters.search = this.value.toLowerCase();
-            // Clear search results if empty
-            if (!filters.search) {
-              searchResults.clear();
+        pagefindUI = new PagefindUI({
+          element: "#pagefind-search",
+          showSubResults: true,
+          showImages: false,
+          excerptLength: 15,
+          processResult: function(result) {
+            if (result.url) {
+              searchResults.add(result.url);
             }
-            // Apply filters after a short delay to let Pagefind process
-            setTimeout(applyFilters, 300);
-          });
-        }
-      });
+            return result;
+          }
+        });
 
-      observer.observe(searchContainer, {
-        childList: true,
-        subtree: true
-      });
+        // Watch for input changes in Pagefind's search box
+        const observer = new MutationObserver(function() {
+          const pagefindInput = pagefindContainer.querySelector('input[type="text"]');
+          if (pagefindInput && !pagefindInput.dataset.listenerAdded) {
+            pagefindInput.dataset.listenerAdded = 'true';
+            pagefindInput.addEventListener('input', function() {
+              filters.search = this.value.toLowerCase();
+              if (!filters.search) {
+                searchResults.clear();
+              }
+              setTimeout(applyFilters, 300);
+            });
+          }
+        });
+
+        observer.observe(pagefindContainer, {
+          childList: true,
+          subtree: true
+        });
+      }
     }
   }
 
@@ -199,12 +207,15 @@
     if (params.has('package')) filters.package = params.get('package');
     if (params.has('search')) {
       filters.search = params.get('search');
-      // Pagefind will populate its own search box, so we'll set it after initialization
+      // Populate search input
       setTimeout(function() {
+        const searchInput = document.getElementById('tutorial-search');
+        if (searchInput) {
+          searchInput.value = filters.search;
+        }
         const pagefindInput = document.querySelector('#pagefind-search input[type="text"]');
         if (pagefindInput) {
           pagefindInput.value = filters.search;
-          // Trigger search
           pagefindInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
       }, 500);
