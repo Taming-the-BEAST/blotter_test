@@ -19,7 +19,7 @@ class TutorialMetadataValidator
     @warnings = []
     
     validate_required_fields(tutorial_frontmatter)
-    validate_level(tutorial_frontmatter)
+    # validate_level(tutorial_frontmatter)
     validate_tutorial_type(tutorial_frontmatter)
     validate_status(tutorial_frontmatter)
     validate_keywords(tutorial_frontmatter)

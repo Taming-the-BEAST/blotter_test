@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "pagefind": "^1.4.0"
+  },
+  "scripts": {
+    "build": "bundle exec jekyll build && npm run index",
+    "index": "pagefind --site _site --glob \"tutorials/**/*.html\"",
+    "serve": "bundle exec jekyll serve"
+  }
+}

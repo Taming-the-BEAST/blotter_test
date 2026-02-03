@@ -2,10 +2,10 @@
 # This file defines the valid values and structure for tutorial metadata
 
 # Valid experience levels
-# levels:
-#   - Beginner
-#   - Intermediate
-#   - Professional
+levels:
+  - Beginner
+  - Intermediate
+  - Professional
 
 # Valid tutorial types
 tutorial_types:
@@ -97,7 +97,7 @@ domains:
 # Required fields
 required_fields:
   - author
-  # - level
+  - level
   - title
   - beastversion
   - tutorial_type

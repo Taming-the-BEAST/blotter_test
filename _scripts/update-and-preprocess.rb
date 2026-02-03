@@ -27,9 +27,9 @@ config["tutorials"].each do |repo|
 		`git clone --depth 1 https://github.com/#{repo}.git`
 	end
 	Dir.chdir($basedir + "/tutorials/" + name)			# drop into blotter dir	
-	`git clean -f`										# remove untracked files, but keep directories
-	`git reset --hard HEAD`								# bring back to head state
-	`git pull`							# git pull	
+	# `git clean -f`										# remove untracked files, but keep directories
+	# `git reset --hard HEAD`								# bring back to head state
+	# `git pull`							# git pull	
 
 	# Check if license files exist
 	if Dir.glob("LICENSE*").length == 0

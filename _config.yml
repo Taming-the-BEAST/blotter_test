@@ -35,6 +35,11 @@ exclude:
   - "Gemfile"
   - "Gemfile.lock"
   - "github.token"
+  - "venv"
+  - "venv/**"
+  - ".venv"
+  - ".venv/**"
+  - "_scripts"
 
 defaults:
   -
@@ -47,6 +52,28 @@ defaults:
       path: "contribute/Hosting-guide-printable"
     values:
       layout: "post-printable"
+  -
+    scope:
+      path: ""
+      type: "tutorials"
+    values:
+      layout: "tutorial"
+
+collections:
+  tutorials:
+    output: true
+    permalink: /tutorials/:name/
+
+# Tutorial categorization
+tutorial_categories:
+  levels:
+    - Beginner
+    - Intermediate
+    - Professional
+  types:
+    - Core
+    - Model-specific
+    - Applied
 
 scholar:
   style: apa
@@ -78,42 +105,42 @@ scholar:
 
 tutorials:
   - taming-the-beast/Introduction-to-BEAST2
-  - taming-the-beast/Troubleshooting-convergence-issues
-  - taming-the-beast/Troubleshooting-initialization-issues
-  - nicfel/AIM-Tutorial
-  - taming-the-beast/Bacter-Tutorial
-  - nicfel/CoupledMCMC-Tutorial
-  - rachelwarnock/BDMM-Prime-for-macroevolution
-  - genomescale/calibrated-species-trees
-  - mmatschiner/CladeAge-Tutorial
-  - bjoelle/ClaDS-tutorial
+#  - taming-the-beast/Troubleshooting-convergence-issues
+#  - taming-the-beast/Troubleshooting-initialization-issues
+#  - nicfel/AIM-Tutorial
+#  - taming-the-beast/Bacter-Tutorial
+#  - nicfel/CoupledMCMC-Tutorial
+#  - rachelwarnock/BDMM-Prime-for-macroevolution
+#  - genomescale/calibrated-species-trees
+#  - mmatschiner/CladeAge-Tutorial
+#  - bjoelle/ClaDS-tutorial
   #- Rong419/contraband-tutorial  
-  - taming-the-beast/FBD-tutorial
-  - nicfel/Reassortment-Tutorial
-  - KonstantinHoffmann/LanguagePhylogenies
-  - taming-the-BEAST/Mascot-Tutorial
-  - taming-the-beast/Molecular-Dating-Tutorial
-  - duchene/adequacy_tutorial
+#  - taming-the-beast/FBD-tutorial
+#  - nicfel/Reassortment-Tutorial
+#  - KonstantinHoffmann/LanguagePhylogenies
+#  - taming-the-BEAST/Mascot-Tutorial
+#  - taming-the-beast/Molecular-Dating-Tutorial
+#  - duchene/adequacy_tutorial
   #- rbouckaert/NS-tutorial
-  - sgtRoberty/NS-tutorial
-  - taming-the-beast/Molecular-clock-dating-and-modelling-rate-variation
-  - bjoelle/MSBD-tutorial
-  - boskovav/PIQMEE-Tutorial
-  - taming-the-beast/Prior-selection
-  - taming-the-beast/SCOTTI-Tutorial
-  - bethany-j-allen/Skyline-analyses-for-macroevolution
+#  - sgtRoberty/NS-tutorial
+#  - taming-the-beast/Molecular-clock-dating-and-modelling-rate-variation
+#  - bjoelle/MSBD-tutorial
+#  - boskovav/PIQMEE-Tutorial
+#  - taming-the-beast/Prior-selection
+#  - taming-the-beast/SCOTTI-Tutorial
+#  - bethany-j-allen/Skyline-analyses-for-macroevolution
   - taming-the-beast/Skyline-plots
-  - bjoelle/BFD_snapper_tutorial
-  - genomescale/starbeast2-tutorial
-  - taming-the-beast/StarBeast3-Tutorial
+#  - bjoelle/BFD_snapper_tutorial
+#  - genomescale/starbeast2-tutorial
+#  - taming-the-beast/StarBeast3-Tutorial
   - taming-the-beast/Structured-coalescent
-  - taming-the-beast/Structured-birth-death-model
-  - taming-the-beast/Substitution-model-averaging
+#  - taming-the-beast/Structured-birth-death-model
+#  - taming-the-beast/Substitution-model-averaging
   #- seidels/TiDeTree-Tutorial
-  - laduplessis/TiDeTree-Tutorial
-  - walterxie/MEP-tutorial
-  - bethany-j-allen/Total-Evidence-Tutorial
-  - taming-the-beast/Visualizing-BEAST2-results
+#  - laduplessis/TiDeTree-Tutorial
+#  - walterxie/MEP-tutorial
+#  - bethany-j-allen/Total-Evidence-Tutorial
+#  - taming-the-beast/Visualizing-BEAST2-results
 
  # Deprecated
  #- genomescale/species-tree-clocks

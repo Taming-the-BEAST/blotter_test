@@ -92,6 +92,11 @@ module Tutorials
 				tutorial_title  = tutorial_header["title"]
 				tutorial_author = tutorial_header["author"]
 				tutorial_beast  = tutorial_header["beastversion"]
+				tutorial_type   = tutorial_header["tutorial_type"]
+				tutorial_packages = tutorial_header["packages"] || []
+				tutorial_keywords = tutorial_header["keywords"] || []
+				tutorial_status = tutorial_header["status"]
+				tutorial_domains = tutorial_header["domains"] || []
 				if (tutorial_header["subtitle"] != nil && tutorial_description != tutorial_header["subtitle"])
 				   tutorial_description = tutorial_header["subtitle"]
 				end
@@ -164,6 +169,11 @@ module Tutorials
 					"contributors" => tutorial_contributors,
 					"level" => tutorial_level,
 					"beastversion" => tutorial_beast,
+					"tutorial_type" => tutorial_type,
+					"packages" => tutorial_packages,
+					"keywords" => tutorial_keywords,
+					"status" => tutorial_status,
+					"domains" => tutorial_domains,
 					"commits" => tutorial_commits,
 					"default_branch" => tutorial_default_branch,
 					"pdfs" => pdf_array,

@@ -31,6 +31,45 @@ categories:
 			</ol>
 		</div>
 		<p>
+		<!-- Tutorial metadata badges -->
+		<div class="tutorial-badges" style="margin-bottom: 15px;">
+			{% if page.level %}
+			<span class="badge badge-level badge-{{ page.level | downcase }}" style="padding: 5px 10px; margin-right: 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+				{{ page.level }}
+			</span>
+			{% endif %}
+			{% if page.status == 'legacy' %}
+			<span class="badge badge-legacy" style="background: #ffc107; color: #333; padding: 5px 10px; margin-right: 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+				Legacy
+			</span>
+			{% endif %}
+			{% if page.tutorial_type %}
+			<span class="tag tag-type" style="background: #6f42c1; color: white; padding: 4px 8px; margin-right: 6px; border-radius: 4px; font-size: 11px;">
+				{{ page.tutorial_type }}
+			</span>
+			{% endif %}
+			{% for package in page.packages %}
+			<span class="tag tag-package" style="background: #007bff; color: white; padding: 4px 8px; margin-right: 6px; border-radius: 4px; font-size: 11px;">
+				{{ package }}
+			</span>
+			{% endfor %}
+		</div>
+
+		<!-- Legacy warning -->
+		{% if page.status == 'legacy' %}
+		<div class="alert alert-warning" style="padding: 15px; margin: 20px 0; border-radius: 6px; border-left: 4px solid #ffc107; background: #fff3cd; color: #856404;">
+			<strong>⚠️ Legacy Tutorial:</strong>
+			{% if page.legacy_reason %}
+			{{ page.legacy_reason }}
+			{% else %}
+			This tutorial is marked as legacy and may be outdated.
+			{% endif %}
+			{% if page.legacy_alternative %}
+			<br><a href="{{ page.legacy_alternative }}">View recommended alternative →</a>
+			{% endif %}
+		</div>
+		{% endif %}
+
 		<div class="head">
 			{% if tutorial.description == blank %}
 				{{ page.subtitle }}
@@ -56,14 +95,42 @@ categories:
 			{% endfor %}
 		</div>
 		{% endif %}
-	</div>				
+
+		<!-- Keywords -->
+		{% if page.keywords.size > 0 %}
+		<div class="smallnote" style="margin-top: 10px;">
+			<strong>Keywords:</strong>
+			{% for keyword in page.keywords %}
+			<span class="tag tag-keyword" style="background: #e9ecef; padding: 3px 6px; margin-right: 4px; border-radius: 3px; font-size: 10px;">
+				{{ keyword }}
+			</span>
+			{% endfor %}
+		</div>
+		{% endif %}
+	</div>
 </div>
+
+<!-- Add CSS for badges -->
+<style>
+	.badge-beginner {
+		background: #28a745;
+		color: white;
+	}
+	.badge-intermediate {
+		background: #ffc107;
+		color: #333;
+	}
+	.badge-professional {
+		background: #dc3545;
+		color: white;
+	}
+</style>
 
 <div class="bigspacer"></div>
 
 <div class="row">
 	<div class="col-md-3">
-	<div id="sidebar">
+	<div id="sidebar" data-pagefind-ignore>
 		<div class="bigspacer"></div>
 		<div class="smallhead">
 			Tutorial
@@ -218,8 +285,18 @@ categories:
 	</div>
 	</div>
 
-	<div class="col-md-8">				
-		<div class="post">
+	<div class="col-md-8">
+		<div class="post" data-pagefind-body>
+			<!-- Pagefind meta tags for filtering -->
+			<div data-pagefind-meta="level:{{ page.level }}"></div>
+			<div data-pagefind-meta="type:{{ page.tutorial_type }}"></div>
+			{% for package in page.packages %}
+			<div data-pagefind-meta="package:{{ package }}"></div>
+			{% endfor %}
+			{% for keyword in page.keywords %}
+			<div data-pagefind-meta="keyword:{{ keyword }}"></div>
+			{% endfor %}
+
 			<p>
 			{{ content }}
 

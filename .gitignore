@@ -1,12 +1,19 @@
 # Compiled site
 _site/
 
+# Pagefind search index
+pagefind/
+
+# Node modules
+node_modules/
+package-lock.json
+
 # Projects
 projects/
 !projects/index.html
 
 # Tutorials
-tutorials/
+tutorials/*
 !tutorials/tutorial_schema.yml
 !tutorials/index.html
 !tutorials/beginner/
