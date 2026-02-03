@@ -22,7 +22,7 @@
   });
 
   function setupFilterButtons() {
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.querySelectorAll('[data-filter]').forEach(btn => {
       btn.addEventListener('click', function() {
         const filterType = this.dataset.filter;
         const value = this.dataset.value;
@@ -133,7 +133,7 @@
       // Search filter (fallback to simple search if Pagefind hasn't loaded results yet)
       if (filters.search) {
         // Try to get the card's tutorial URL
-        const cardLink = card.querySelector('h3 a');
+        const cardLink = card.querySelector('.card-title a');
         const cardUrl = cardLink ? cardLink.getAttribute('href') : null;
 
         // If Pagefind has results, use them; otherwise fallback to simple search

@@ -8,60 +8,59 @@ categories:
 <div class="tutorial-index">
   <h1>BEAST2 Tutorials</h1>
 
-  <div class="tutorial-stats">
+  <div class="text-center p-3 bg-light rounded mb-4 fs-5">
     <span id="tutorial-count">{% if site.data.tutorials %}{{ site.data.tutorials | size }}{% else %}0{% endif %}</span> tutorials available
   </div>
 
   <!-- Filter Controls -->
-  <div class="filter-section">
+  <div class="bg-light p-4 rounded mb-4">
     <h2>Filter & Search</h2>
 
     <!-- Search -->
-    <div class="filter-group">
-      <label for="tutorial-search">Search:</label>
-      <input type="text" id="tutorial-search" class="search-fallback" placeholder="Search tutorials...">
+    <div class="mb-3">
+      <label for="tutorial-search" class="form-label fw-semibold">Search:</label>
+      <input type="text" id="tutorial-search" class="form-control" placeholder="Search tutorials...">
       <div id="pagefind-search" style="display: none;"></div>
     </div>
 
     <!-- Level filter -->
-    <div class="filter-group">
-      <label>Experience Level:</label>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="level" data-value="all">All</button>
-        <button class="filter-btn" data-filter="level" data-value="Beginner">Beginner</button>
-        <button class="filter-btn" data-filter="level" data-value="Intermediate">Intermediate</button>
-        <button class="filter-btn" data-filter="level" data-value="Professional">Professional</button>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Experience Level:</label>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary rounded-pill active" data-filter="level" data-value="all">All</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="level" data-value="Beginner">Beginner</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="level" data-value="Intermediate">Intermediate</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="level" data-value="Professional">Professional</button>
       </div>
     </div>
 
     <!-- Type filter -->
-    <div class="filter-group">
-      <label>Tutorial Type:</label>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="type" data-value="all">All</button>
-        <button class="filter-btn" data-filter="type" data-value="Core">Core</button>
-        <button class="filter-btn" data-filter="type" data-value="Model-specific">Model-specific</button>
-        <button class="filter-btn" data-filter="type" data-value="Applied">Applied</button>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Tutorial Type:</label>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary rounded-pill active" data-filter="type" data-value="all">All</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Core">Core</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Model-specific">Model-specific</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Applied">Applied</button>
       </div>
     </div>
 
     <!-- Package filter -->
-    <div class="filter-group">
-      <label>Package:</label>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-filter="package" data-value="all">All</button>
-        <button class="filter-btn" data-filter="package" data-value="BDSKY">BDSKY</button>
-        <button class="filter-btn" data-filter="package" data-value="MASCOT">MASCOT</button>
-        <button class="filter-btn" data-filter="package" data-value="StarBeast3">StarBeast3</button>
-        <button class="filter-btn" data-filter="package" data-value="SCOTTI">SCOTTI</button>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Package:</label>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary rounded-pill active" data-filter="package" data-value="all">All</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="BDSKY">BDSKY</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="MASCOT">MASCOT</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="StarBeast3">StarBeast3</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="SCOTTI">SCOTTI</button>
       </div>
     </div>
 
     <!-- Legacy toggle -->
-    <div class="filter-group">
-      <label>
-        <input type="checkbox" id="show-legacy"> Show legacy tutorials
-      </label>
+    <div class="mb-3 form-check">
+      <input type="checkbox" class="form-check-input" id="show-legacy">
+      <label class="form-check-label" for="show-legacy">Show legacy tutorials</label>
     </div>
   </div>
 
@@ -69,7 +68,7 @@ categories:
   <div class="tutorial-grid" id="tutorial-grid">
     {% if site.data.tutorials %}
     {% for tut in site.data.tutorials %}
-    <div class="tutorial-card {% if tut.status == 'legacy' %}legacy{% endif %}"
+    <div class="card tutorial-card {% if tut.status == 'legacy' %}border-warning border-start border-4{% endif %}"
          data-level="{{ tut.level }}"
          data-type="{{ tut.tutorial_type }}"
          data-packages="{{ tut.packages | join: ',' }}"
@@ -77,34 +76,40 @@ categories:
          data-status="{{ tut.status }}"
          data-search="{{ tut.title | downcase }} {{ tut.subtitle | downcase }}">
 
-      {% if tut.status == 'legacy' %}
-      <span class="badge badge-legacy">Legacy</span>
-      {% endif %}
-
-      {% if tut.level %}
-      <span class="badge badge-{{ tut.level | downcase }}">{{ tut.level }}</span>
-      {% endif %}
-
-      <h3><a href="/tutorials/{{ tut.title | replace: ' ', '-' }}/">{{ tut.title }}</a></h3>
-      <p class="subtitle">{{ tut.subtitle }}</p>
-      <p class="authors">{{ tut.author }}</p>
-
-      <div class="tags">
-        {% if tut.tutorial_type %}
-        <span class="tag tag-type">{{ tut.tutorial_type }}</span>
+      <div class="card-body">
+        {% if tut.status == 'legacy' %}
+        <span class="badge bg-warning text-dark me-1 mb-2">Legacy</span>
         {% endif %}
 
-        {% if tut.packages %}
-        {% for package in tut.packages %}
-        <span class="tag tag-package">{{ package }}</span>
-        {% endfor %}
+        {% if tut.level == 'Beginner' %}
+        <span class="badge bg-success me-1 mb-2">{{ tut.level }}</span>
+        {% elsif tut.level == 'Intermediate' %}
+        <span class="badge bg-warning text-dark me-1 mb-2">{{ tut.level }}</span>
+        {% elsif tut.level == 'Professional' %}
+        <span class="badge bg-danger me-1 mb-2">{{ tut.level }}</span>
         {% endif %}
+
+        <h5 class="card-title"><a href="/tutorials/{{ tut.title | replace: ' ', '-' }}/" class="text-decoration-none">{{ tut.title }}</a></h5>
+        <p class="card-subtitle text-muted small mb-2">{{ tut.subtitle }}</p>
+        <p class="text-secondary small mb-3">{{ tut.author }}</p>
+
+        <div class="d-flex flex-wrap gap-1">
+          {% if tut.tutorial_type %}
+          <span class="badge rounded-pill bg-purple">{{ tut.tutorial_type }}</span>
+          {% endif %}
+
+          {% if tut.packages %}
+          {% for package in tut.packages %}
+          <span class="badge rounded-pill bg-primary">{{ package }}</span>
+          {% endfor %}
+          {% endif %}
+        </div>
       </div>
     </div>
     {% endfor %}
     {% else %}
-    <div class="alert alert-warning" style="padding: 20px; text-align: center;">
-      <p>No tutorials found. Please run the preprocessing script first:</p>
+    <div class="alert alert-warning text-center p-4">
+      <p class="mb-2">No tutorials found. Please run the preprocessing script first:</p>
       <code>ruby _scripts/update-and-preprocess.rb</code>
     </div>
     {% endif %}

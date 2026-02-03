@@ -1,4 +1,5 @@
 /* Tutorial filtering and display styles */
+/* Custom styles that complement Bootstrap 5 */
 
 .tutorial-index {
   max-width: 1200px;
@@ -6,74 +7,7 @@
   padding: 20px;
 }
 
-.tutorial-stats {
-  text-align: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin-bottom: 30px;
-  font-size: 18px;
-}
-
-.filter-section {
-  background: #f8f9fa;
-  padding: 25px;
-  border-radius: 8px;
-  margin-bottom: 30px;
-}
-
-.filter-group {
-  margin-bottom: 20px;
-}
-
-.filter-group label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.search-input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  transition: border-color 0.3s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.filter-btn {
-  padding: 8px 16px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
-}
-
-.filter-btn:hover {
-  border-color: #007bff;
-  background: #e7f3ff;
-}
-
-.filter-btn.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
+/* Tutorial grid - CSS Grid for responsive auto-fill layout */
 .tutorial-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -81,13 +15,9 @@
   margin-top: 30px;
 }
 
+/* Tutorial card hover effects */
 .tutorial-card {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  transition: all 0.3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .tutorial-card:hover {
@@ -95,119 +25,46 @@
   box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
-.tutorial-card.legacy {
-  border-left: 4px solid #ffc107;
-  opacity: 0.9;
+/* Muted Wes Anderson-inspired color palette */
+
+/* Tutorial card title - dark grey instead of bright red */
+.tutorial-card .card-title a {
+  color: #3d3d3d;
 }
 
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-right: 8px;
-  margin-bottom: 8px;
+.tutorial-card .card-title a:hover {
+  color: #5a5a5a;
 }
 
-.badge-beginner {
-  background: #28a745;
+/* Level badges - muted tones */
+.tutorial-card .badge.bg-success {
+  background-color: #7d9f8c !important; /* sage green */
+}
+
+.tutorial-card .badge.bg-warning {
+  background-color: #c9a961 !important; /* dusty gold */
+  color: #3d3d3d !important;
+}
+
+.tutorial-card .badge.bg-danger {
+  background-color: #b87361 !important; /* muted terracotta */
+}
+
+/* Type badge - dusty mauve */
+.bg-purple {
+  background-color: #9a8297;
+}
+
+/* Package badge - muted slate blue */
+.tutorial-card .badge.bg-primary {
+  background-color: #6b8a9a !important; /* slate blue */
+}
+
+/* Filter button active state override */
+[data-filter].active {
+  background-color: #007bff;
   color: white;
-}
-
-.badge-intermediate {
-  background: #ffc107;
-  color: #333;
-}
-
-.badge-professional {
-  background: #dc3545;
-  color: white;
-}
-
-.badge-legacy {
-  background: #ffc107;
-  color: #333;
-}
-
-.tutorial-card h3 {
-  margin: 10px 0;
-  font-size: 20px;
-}
-
-.tutorial-card h3 a {
-  color: #333;
-  text-decoration: none;
-}
-
-.tutorial-card h3 a:hover {
-  color: #007bff;
-}
-
-.tutorial-card .subtitle {
-  color: #666;
-  font-size: 14px;
-  margin: 5px 0 10px;
-}
-
-.tutorial-card .authors {
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 15px;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 15px;
-}
-
-.tag {
-  padding: 4px 8px;
-  background: #e9ecef;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.tag-type {
-  background: #6f42c1;
-  color: white;
-}
-
-.tag-package {
-  background: #007bff;
-  color: white;
-}
-
-.alert {
-  padding: 15px;
-  margin: 20px 0;
-  border-radius: 6px;
-  border-left: 4px solid;
-}
-
-.alert-warning {
-  background: #fff3cd;
-  border-color: #ffc107;
-  color: #856404;
-}
-
-/* Checkbox styling - restore default appearance */
-.filter-group input[type="checkbox"] {
-  appearance: auto;
-  -webkit-appearance: checkbox;
-  -moz-appearance: checkbox;
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  cursor: pointer;
-  vertical-align: middle;
-}
-
-.filter-group label {
-  cursor: pointer;
+  border-color: #007bff;
 }
 
 /* Pagefind search customization */
@@ -223,32 +80,13 @@
   border-radius: 6px;
 }
 
-/* Fallback when Pagefind is not available */
-.search-fallback {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  transition: border-color 0.3s;
-}
-
-.search-fallback:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .tutorial-grid {
     grid-template-columns: 1fr;
   }
 
-  .filter-buttons {
-    flex-direction: column;
-  }
-
-  .filter-btn {
+  [data-filter] {
     width: 100%;
   }
 }
