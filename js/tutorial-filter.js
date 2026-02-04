@@ -1,23 +1,30 @@
 (function() {
   'use strict';
 
+  // Filters now support multiple selections (arrays)
   const filters = {
-    level: 'all',
-    type: 'all',
-    package: 'all',
+    level: [],      // empty = all
+    type: [],
+    package: [],
+    domain: [],
     search: '',
     showLegacy: false
   };
 
-  let pagefindUI;
-  let searchResults = new Set(); // Store URLs from Pagefind results
+  let currentSort = 'date';
+  let searchMode = 'keyword';
+  let pagefindInstance = null;
 
   // Initialize
   document.addEventListener('DOMContentLoaded', function() {
     loadFiltersFromURL();
     setupFilterButtons();
+    setupSortButtons();
     setupSearch();
+    setupSearchModeToggle();
+    setupKeywordChips();
     setupLegacyToggle();
+    initPagefind();
     applyFilters();
   });
 
@@ -27,71 +34,95 @@
         const filterType = this.dataset.filter;
         const value = this.dataset.value;
 
-        // Update active state
-        document.querySelectorAll(`[data-filter="${filterType}"]`)
-          .forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
+        if (value === 'all') {
+          // Clear all selections for this filter
+          filters[filterType] = [];
+          document.querySelectorAll(`[data-filter="${filterType}"]`)
+            .forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+        } else {
+          // Toggle this value
+          const index = filters[filterType].indexOf(value);
+          if (index > -1) {
+            // Remove from selection
+            filters[filterType].splice(index, 1);
+            this.classList.remove('active');
+          } else {
+            // Add to selection
+            filters[filterType].push(value);
+            this.classList.add('active');
+          }
 
-        // Update filter
-        filters[filterType] = value;
+          // Update "All" button state
+          const allBtn = document.querySelector(`[data-filter="${filterType}"][data-value="all"]`);
+          if (allBtn) {
+            if (filters[filterType].length === 0) {
+              allBtn.classList.add('active');
+            } else {
+              allBtn.classList.remove('active');
+            }
+          }
+        }
+
         applyFilters();
       });
     });
   }
 
+  function setupSortButtons() {
+    document.querySelectorAll('[data-sort]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const sortType = this.dataset.sort;
+
+        document.querySelectorAll('[data-sort]')
+          .forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        currentSort = sortType;
+        sortCards();
+      });
+    });
+  }
+
+  function sortCards() {
+    const grid = document.getElementById('tutorial-grid');
+    if (!grid) return;
+
+    const cards = Array.from(grid.querySelectorAll('.tutorial-card'));
+    const levelOrder = { 'Beginner': 1, 'Intermediate': 2, 'Professional': 3 };
+
+    cards.sort((a, b) => {
+      switch (currentSort) {
+        case 'date':
+          const dateA = a.dataset.date || '0';
+          const dateB = b.dataset.date || '0';
+          return dateB.localeCompare(dateA);
+
+        case 'title':
+          const titleA = a.dataset.title || '';
+          const titleB = b.dataset.title || '';
+          return titleA.localeCompare(titleB);
+
+        case 'level':
+          const levelA = levelOrder[a.dataset.level] || 99;
+          const levelB = levelOrder[b.dataset.level] || 99;
+          return levelA - levelB;
+
+        default:
+          return 0;
+      }
+    });
+
+    cards.forEach(card => grid.appendChild(card));
+  }
+
   function setupSearch() {
-    // Setup fallback search input
     const searchInput = document.getElementById('tutorial-search');
     if (searchInput) {
       searchInput.addEventListener('input', function() {
         filters.search = this.value.toLowerCase();
         applyFilters();
       });
-    }
-
-    // Also try to initialize Pagefind UI if available
-    if (typeof PagefindUI !== 'undefined') {
-      const pagefindContainer = document.getElementById('pagefind-search');
-      if (pagefindContainer) {
-        pagefindContainer.style.display = 'block';
-        // Hide fallback search if Pagefind loads
-        if (searchInput) {
-          searchInput.style.display = 'none';
-        }
-
-        pagefindUI = new PagefindUI({
-          element: "#pagefind-search",
-          showSubResults: true,
-          showImages: false,
-          excerptLength: 15,
-          processResult: function(result) {
-            if (result.url) {
-              searchResults.add(result.url);
-            }
-            return result;
-          }
-        });
-
-        // Watch for input changes in Pagefind's search box
-        const observer = new MutationObserver(function() {
-          const pagefindInput = pagefindContainer.querySelector('input[type="text"]');
-          if (pagefindInput && !pagefindInput.dataset.listenerAdded) {
-            pagefindInput.dataset.listenerAdded = 'true';
-            pagefindInput.addEventListener('input', function() {
-              filters.search = this.value.toLowerCase();
-              if (!filters.search) {
-                searchResults.clear();
-              }
-              setTimeout(applyFilters, 300);
-            });
-          }
-        });
-
-        observer.observe(pagefindContainer, {
-          childList: true,
-          subtree: true
-        });
-      }
     }
   }
 
@@ -105,6 +136,60 @@
     }
   }
 
+  function setupSearchModeToggle() {
+    const modeRadios = document.querySelectorAll('input[name="search-mode"]');
+    const keywordContainer = document.getElementById('keyword-search-container');
+    const fulltextContainer = document.getElementById('fulltext-search-container');
+
+    modeRadios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        searchMode = this.value;
+
+        if (searchMode === 'keyword') {
+          keywordContainer.style.display = 'block';
+          fulltextContainer.style.display = 'none';
+          // Show all cards, apply keyword filter
+          applyFilters();
+        } else {
+          keywordContainer.style.display = 'none';
+          fulltextContainer.style.display = 'block';
+          // Clear keyword search and show all cards
+          filters.search = '';
+          const searchInput = document.getElementById('tutorial-search');
+          if (searchInput) searchInput.value = '';
+          applyFilters();
+        }
+      });
+    });
+  }
+
+  function setupKeywordChips() {
+    document.querySelectorAll('.keyword-chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        const keyword = this.dataset.keyword;
+        const searchInput = document.getElementById('tutorial-search');
+
+        if (searchInput) {
+          searchInput.value = keyword;
+          filters.search = keyword.toLowerCase();
+          applyFilters();
+        }
+      });
+    });
+  }
+
+  function initPagefind() {
+    const pagefindContainer = document.getElementById('pagefind-search');
+    if (pagefindContainer && typeof PagefindUI !== 'undefined') {
+      pagefindInstance = new PagefindUI({
+        element: '#pagefind-search',
+        showSubResults: true,
+        showImages: false,
+        excerptLength: 15
+      });
+    }
+  }
+
   function applyFilters() {
     const cards = document.querySelectorAll('.tutorial-card');
     let visibleCount = 0;
@@ -112,54 +197,43 @@
     cards.forEach(card => {
       let show = true;
 
-      // Level filter
-      if (filters.level !== 'all' && card.dataset.level !== filters.level) {
-        show = false;
-      }
-
-      // Type filter
-      if (filters.type !== 'all' && card.dataset.type !== filters.type) {
-        show = false;
-      }
-
-      // Package filter
-      if (filters.package !== 'all') {
-        const packages = (card.dataset.packages || '').split(',');
-        if (!packages.includes(filters.package)) {
+      // Level filter (OR logic - match any selected)
+      if (filters.level.length > 0) {
+        if (!filters.level.includes(card.dataset.level)) {
           show = false;
         }
       }
 
-      // Search filter (fallback to simple search if Pagefind hasn't loaded results yet)
+      // Type filter
+      if (filters.type.length > 0) {
+        if (!filters.type.includes(card.dataset.type)) {
+          show = false;
+        }
+      }
+
+      // Package filter (OR logic - card matches if it has ANY of the selected packages)
+      if (filters.package.length > 0) {
+        const cardPackages = (card.dataset.packages || '').split(',').filter(p => p);
+        const hasMatch = filters.package.some(pkg => cardPackages.includes(pkg));
+        if (!hasMatch) {
+          show = false;
+        }
+      }
+
+      // Domain filter (OR logic)
+      if (filters.domain.length > 0) {
+        const cardDomains = (card.dataset.domains || '').split(',').filter(d => d);
+        const hasMatch = filters.domain.some(dom => cardDomains.includes(dom));
+        if (!hasMatch) {
+          show = false;
+        }
+      }
+
+      // Search filter
       if (filters.search) {
-        // Try to get the card's tutorial URL
-        const cardLink = card.querySelector('.card-title a');
-        const cardUrl = cardLink ? cardLink.getAttribute('href') : null;
-
-        // If Pagefind has results, use them; otherwise fallback to simple search
-        if (searchResults.size > 0) {
-          // Check if this card's URL is in Pagefind results
-          let foundInResults = false;
-          if (cardUrl) {
-            searchResults.forEach(resultUrl => {
-              if (resultUrl.includes(cardUrl) || cardUrl.includes(resultUrl)) {
-                foundInResults = true;
-              }
-            });
-          }
-          if (!foundInResults) {
-            show = false;
-          }
-        } else {
-          // Fallback to simple keyword search
-          const searchText = (
-            card.dataset.search + ' ' +
-            card.dataset.keywords
-          ).toLowerCase();
-
-          if (!searchText.includes(filters.search)) {
-            show = false;
-          }
+        const searchText = (card.dataset.search || '').toLowerCase();
+        if (!searchText.includes(filters.search)) {
+          show = false;
         }
       }
 
@@ -168,7 +242,6 @@
         show = false;
       }
 
-      // Apply visibility
       card.style.display = show ? 'block' : 'none';
       if (show) visibleCount++;
     });
@@ -179,18 +252,19 @@
       countEl.textContent = visibleCount;
     }
 
-    // Update URL for sharing
     updateURL();
   }
 
   function updateURL() {
     const params = new URLSearchParams();
 
-    if (filters.level !== 'all') params.set('level', filters.level);
-    if (filters.type !== 'all') params.set('type', filters.type);
-    if (filters.package !== 'all') params.set('package', filters.package);
+    if (filters.level.length > 0) params.set('level', filters.level.join(','));
+    if (filters.type.length > 0) params.set('type', filters.type.join(','));
+    if (filters.package.length > 0) params.set('package', filters.package.join(','));
+    if (filters.domain.length > 0) params.set('domain', filters.domain.join(','));
     if (filters.search) params.set('search', filters.search);
     if (filters.showLegacy) params.set('legacy', '1');
+    if (currentSort !== 'date') params.set('sort', currentSort);
 
     const newURL = window.location.pathname +
       (params.toString() ? '?' + params.toString() : '');
@@ -198,27 +272,30 @@
     window.history.replaceState({}, '', newURL);
   }
 
-  // Load filters from URL on page load
   function loadFiltersFromURL() {
     const params = new URLSearchParams(window.location.search);
 
-    if (params.has('level')) filters.level = params.get('level');
-    if (params.has('type')) filters.type = params.get('type');
-    if (params.has('package')) filters.package = params.get('package');
+    // Parse comma-separated values into arrays
+    if (params.has('level')) {
+      filters.level = params.get('level').split(',');
+    }
+    if (params.has('type')) {
+      filters.type = params.get('type').split(',');
+    }
+    if (params.has('package')) {
+      filters.package = params.get('package').split(',');
+    }
+    if (params.has('domain')) {
+      filters.domain = params.get('domain').split(',');
+    }
     if (params.has('search')) {
       filters.search = params.get('search');
-      // Populate search input
       setTimeout(function() {
         const searchInput = document.getElementById('tutorial-search');
         if (searchInput) {
           searchInput.value = filters.search;
         }
-        const pagefindInput = document.querySelector('#pagefind-search input[type="text"]');
-        if (pagefindInput) {
-          pagefindInput.value = filters.search;
-          pagefindInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }, 500);
+      }, 100);
     }
     if (params.has('legacy')) {
       filters.showLegacy = true;
@@ -227,28 +304,30 @@
         legacyToggle.checked = true;
       }
     }
+    if (params.has('sort')) {
+      currentSort = params.get('sort');
+      const sortBtn = document.querySelector(`[data-sort="${currentSort}"]`);
+      if (sortBtn) {
+        document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
+        sortBtn.classList.add('active');
+      }
+    }
 
-    // Activate corresponding buttons
-    if (filters.level !== 'all') {
-      const levelBtn = document.querySelector(`[data-filter="level"][data-value="${filters.level}"]`);
-      if (levelBtn) {
-        document.querySelectorAll('[data-filter="level"]').forEach(b => b.classList.remove('active'));
-        levelBtn.classList.add('active');
+    // Activate filter buttons from URL
+    ['level', 'type', 'package', 'domain'].forEach(filterType => {
+      if (filters[filterType].length > 0) {
+        // Deactivate "All" button
+        const allBtn = document.querySelector(`[data-filter="${filterType}"][data-value="all"]`);
+        if (allBtn) allBtn.classList.remove('active');
+
+        // Activate selected buttons
+        filters[filterType].forEach(value => {
+          const btn = document.querySelector(`[data-filter="${filterType}"][data-value="${value}"]`);
+          if (btn) btn.classList.add('active');
+        });
       }
-    }
-    if (filters.type !== 'all') {
-      const typeBtn = document.querySelector(`[data-filter="type"][data-value="${filters.type}"]`);
-      if (typeBtn) {
-        document.querySelectorAll('[data-filter="type"]').forEach(b => b.classList.remove('active'));
-        typeBtn.classList.add('active');
-      }
-    }
-    if (filters.package !== 'all') {
-      const packageBtn = document.querySelector(`[data-filter="package"][data-value="${filters.package}"]`);
-      if (packageBtn) {
-        document.querySelectorAll('[data-filter="package"]').forEach(b => b.classList.remove('active'));
-        packageBtn.classList.add('active');
-      }
-    }
+    });
+
+    setTimeout(sortCards, 100);
   }
 })();

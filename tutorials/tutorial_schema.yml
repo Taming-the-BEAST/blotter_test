@@ -10,7 +10,7 @@ levels:
 # Valid tutorial types
 tutorial_types:
   - Core              # Core BEAST2 functionality tutorials
-  - Model-specific    # Tutorials focused on specific models/packages
+  - Model set-up    # Tutorials focused on specific models/packages
   - Applied           # Application-focused tutorials (domain-specific)
 
 # Valid status values
@@ -81,10 +81,23 @@ packages:
   - MODEL_SELECTION    # Model selection tools
   - ORC                # Optimised Relaxed Clock
   - substBMA           # Substitution model averaging
+  - bModelTest         # Bayesian model testing for substitution models
+  - SNAPP              # SNP and AFLP Phylogenies
+  - BASTA              # Bayesian Structured coalescent Approximation
+  - PhyDyn             # Phylodynamic inference
+  - BICEPS             # Bayesian Integrated Coalescent Epoch model for Population Studies
+  - TreeStat2          # Tree statistics
+  - SSM                # Standard Substitution Models
+  - morph-models       # Morphological models
+  - CladeAge           # Fossil calibration
+  - sampled-ancestors  # Sampled ancestor trees
+  - BADTRIP            # Transmission tree inference
+  - Babel              # Multi-language support
+  - BEASTvntr          # VNTR analysis
+  - GEO_SPHERE         # Spherical geometry for phylogeography
 
 # Application domains
 domains:
-  - general
   - virology
   - epidemiology
   - phylogeography
@@ -108,6 +121,8 @@ recommended_fields:
   - subtitle
   - keywords
   - packages
+  - tracerversion
+  - figtreeversion
   
 # Optional fields
 optional_fields:
@@ -121,8 +136,8 @@ optional_fields:
 # Validation rules
 validation_rules:
   keywords:
-    min: 3              # Minimum number of keywords
-    max: 10             # Maximum number of keywords
+    min: 3              # min number of keywords
+    max: 10             # max number of keywords
   packages:
     min: 0
     max: 5

@@ -60,11 +60,47 @@
   background-color: #6b8a9a !important; /* slate blue */
 }
 
-/* Filter button active state override */
-[data-filter].active {
-  background-color: #007bff;
+/* Domain badge - muted teal */
+.bg-teal {
+  background-color: #5f9ea0; /* cadet blue / muted teal */
+}
+
+/* BEAST version badge */
+.tutorial-card .badge.bg-secondary {
+  background-color: #8b8b8b !important;
+}
+
+/* Prerequisites badge */
+.tutorial-card .badge.bg-light {
+  border: 1px solid #ddd;
+}
+
+/* Filter and sort button active state override */
+[data-filter].active,
+[data-sort].active {
+  background-color: #6b8a9a;
   color: white;
-  border-color: #007bff;
+  border-color: #6b8a9a;
+}
+
+/* Search mode toggle */
+.btn-check:checked + .btn-outline-secondary {
+  background-color: #6b8a9a;
+  border-color: #6b8a9a;
+  color: white;
+}
+
+/* Keyword chips */
+.keyword-chip {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  transition: all 0.2s;
+}
+
+.keyword-chip:hover {
+  background-color: #6b8a9a;
+  border-color: #6b8a9a;
+  color: white;
 }
 
 /* Pagefind search customization */
@@ -78,6 +114,21 @@
   font-size: 16px;
   border: 2px solid #ddd;
   border-radius: 6px;
+}
+
+/* Pagefind results styling */
+.pagefind-ui__result {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.pagefind-ui__result-link {
+  color: #3d3d3d;
+  font-weight: 600;
+}
+
+.pagefind-ui__result-link:hover {
+  color: #6b8a9a;
 }
 
 /* Responsive design */

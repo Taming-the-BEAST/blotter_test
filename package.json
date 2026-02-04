@@ -4,7 +4,10 @@
   },
   "scripts": {
     "build": "bundle exec jekyll build && npm run index",
+    "build:quick": "bundle exec jekyll build",
     "index": "pagefind --site _site --glob \"tutorials/**/*.html\"",
-    "serve": "bundle exec jekyll serve"
+    "serve": "bundle exec jekyll serve --host 0.0.0.0",
+    "serve:indexed": "npm run build && npm run serve",
+    "serve:quick": "npm run build:quick && npm run serve"
   }
 }

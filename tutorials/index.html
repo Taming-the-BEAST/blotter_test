@@ -5,6 +5,10 @@ categories:
  - tutorials
 ---
 
+{% comment %} Collect unique packages and domains from tutorial data {% endcomment %}
+{% assign all_packages = site.data.tutorials | map: "packages" | compact | flatten | uniq | sort %}
+{% assign all_domains = site.data.tutorials | map: "domains" | compact | flatten | uniq | sort %}
+
 <div class="tutorial-index">
   <h1>BEAST2 Tutorials</h1>
 
@@ -15,12 +19,58 @@ categories:
   <!-- Filter Controls -->
   <div class="bg-light p-4 rounded mb-4">
     <h2>Filter & Search</h2>
+    <p class="text-muted small mb-3">Click multiple options to combine filters</p>
 
     <!-- Search -->
     <div class="mb-3">
       <label for="tutorial-search" class="form-label fw-semibold">Search:</label>
-      <input type="text" id="tutorial-search" class="form-control" placeholder="Search tutorials...">
-      <div id="pagefind-search" style="display: none;"></div>
+      <div class="d-flex gap-2 mb-2">
+        <div class="btn-group" role="group" aria-label="Search mode">
+          <input type="radio" class="btn-check" name="search-mode" id="search-mode-keyword" value="keyword" checked>
+          <label class="btn btn-outline-secondary" for="search-mode-keyword">Keyword Search</label>
+          <input type="radio" class="btn-check" name="search-mode" id="search-mode-fulltext" value="fulltext">
+          <label class="btn btn-outline-secondary" for="search-mode-fulltext">Full-Text Search</label>
+        </div>
+      </div>
+      <div id="keyword-search-container">
+        <input type="text" id="tutorial-search" class="form-control" placeholder="Search by title, author, keywords, packages..." list="keyword-suggestions" autocomplete="off">
+        <datalist id="keyword-suggestions">
+          {% comment %} Collect all searchable terms {% endcomment %}
+          {% assign all_keywords = site.data.tutorials | map: "keywords" | compact | flatten | uniq | sort %}
+          {% for keyword in all_keywords %}
+          <option value="{{ keyword }}">
+          {% endfor %}
+          {% for pkg in all_packages %}
+          <option value="{{ pkg }}">
+          {% endfor %}
+          {% for domain in all_domains %}
+          <option value="{{ domain }}">
+          {% endfor %}
+        </datalist>
+        <div class="mt-2">
+          <small class="text-muted">Popular keywords: </small>
+          <span id="keyword-chips" class="d-inline-flex flex-wrap gap-1">
+            {% assign popular_keywords = "getting started,coalescent,birth-death,molecular clock,MCMC,phylogeography" | split: "," %}
+            {% for kw in popular_keywords %}
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw }}">{{ kw }}</button>
+            {% endfor %}
+          </span>
+        </div>
+      </div>
+      <div id="fulltext-search-container" style="display: none;">
+        <div id="pagefind-search"></div>
+        <small class="text-muted">Full-text search through tutorial content. Run <code>npm run build</code> to update the search index.</small>
+      </div>
+    </div>
+
+    <!-- Sort options -->
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Sort by:</label>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary rounded-pill active" data-sort="date">Recently updated</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-sort="title">Title (A-Z)</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-sort="level">Difficulty</button>
+      </div>
     </div>
 
     <!-- Level filter -->
@@ -40,22 +90,36 @@ categories:
       <div class="d-flex flex-wrap gap-2">
         <button class="btn btn-outline-secondary rounded-pill active" data-filter="type" data-value="all">All</button>
         <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Core">Core</button>
-        <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Model-specific">Model-specific</button>
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Model set-up">Model set-up</button>
         <button class="btn btn-outline-secondary rounded-pill" data-filter="type" data-value="Applied">Applied</button>
       </div>
     </div>
 
-    <!-- Package filter -->
+    <!-- Package filter (dynamic) -->
+    {% if all_packages.size > 0 %}
     <div class="mb-3">
       <label class="form-label fw-semibold">Package:</label>
       <div class="d-flex flex-wrap gap-2">
         <button class="btn btn-outline-secondary rounded-pill active" data-filter="package" data-value="all">All</button>
-        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="BDSKY">BDSKY</button>
-        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="MASCOT">MASCOT</button>
-        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="StarBeast3">StarBeast3</button>
-        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="SCOTTI">SCOTTI</button>
+        {% for pkg in all_packages %}
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="package" data-value="{{ pkg }}">{{ pkg }}</button>
+        {% endfor %}
       </div>
     </div>
+    {% endif %}
+
+    <!-- Domain filter (dynamic) -->
+    {% if all_domains.size > 0 %}
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Application Domain:</label>
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary rounded-pill active" data-filter="domain" data-value="all">All</button>
+        {% for domain in all_domains %}
+        <button class="btn btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain }}">{{ domain | capitalize }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Legacy toggle -->
     <div class="mb-3 form-check">
@@ -72,28 +136,56 @@ categories:
          data-level="{{ tut.level }}"
          data-type="{{ tut.tutorial_type }}"
          data-packages="{{ tut.packages | join: ',' }}"
+         data-domains="{{ tut.domains | join: ',' }}"
          data-keywords="{{ tut.keywords | join: ',' }}"
          data-status="{{ tut.status }}"
-         data-search="{{ tut.title | downcase }} {{ tut.subtitle | downcase }}">
+         data-title="{{ tut.title }}"
+         data-date="{{ tut.commits.first.date | date: '%Y%m%d' }}"
+         data-search="{{ tut.title | downcase }} {{ tut.description | downcase }} {{ tut.author | downcase }} {{ tut.packages | join: ' ' | downcase }} {{ tut.keywords | join: ' ' | downcase }}">
 
       <div class="card-body">
-        {% if tut.status == 'legacy' %}
-        <span class="badge bg-warning text-dark me-1 mb-2">Legacy</span>
+        <!-- Status and level badges -->
+        <div class="mb-2">
+          {% if tut.status == 'legacy' %}
+          <span class="badge bg-warning text-dark me-1">Legacy</span>
+          {% endif %}
+
+          {% if tut.level == 'Beginner' %}
+          <span class="badge bg-success me-1">{{ tut.level }}</span>
+          {% elsif tut.level == 'Intermediate' %}
+          <span class="badge bg-warning text-dark me-1">{{ tut.level }}</span>
+          {% elsif tut.level == 'Professional' %}
+          <span class="badge bg-danger me-1">{{ tut.level }}</span>
+          {% endif %}
+
+          {% if tut.beastversion %}
+          <span class="badge bg-secondary me-1">BEAST {{ tut.beastversion }}</span>
+          {% endif %}
+        </div>
+
+        <h5 class="card-title"><a href="{{ tut.url }}" class="text-decoration-none">{{ tut.title }}</a></h5>
+        <p class="card-subtitle text-muted small mb-2">{{ tut.description }}</p>
+        <p class="text-secondary small mb-2">{{ tut.author }}</p>
+
+        <!-- Last updated -->
+        {% if tut.commits.first.date %}
+        <p class="text-muted small mb-2">
+          <i class="bi bi-clock-history"></i> Updated {{ tut.commits.first.date | date: "%b %Y" }}
+        </p>
         {% endif %}
 
-        {% if tut.level == 'Beginner' %}
-        <span class="badge bg-success me-1 mb-2">{{ tut.level }}</span>
-        {% elsif tut.level == 'Intermediate' %}
-        <span class="badge bg-warning text-dark me-1 mb-2">{{ tut.level }}</span>
-        {% elsif tut.level == 'Professional' %}
-        <span class="badge bg-danger me-1 mb-2">{{ tut.level }}</span>
+        <!-- Prerequisites -->
+        {% if tut.prerequisites %}
+        <p class="small mb-2">
+          <span class="text-muted">Prerequisites:</span>
+          {% for prereq in tut.prerequisites %}
+          <a href="/tutorials/{{ prereq | replace: ' ', '-' }}/" class="badge bg-light text-dark text-decoration-none">{{ prereq }}</a>
+          {% endfor %}
+        </p>
         {% endif %}
 
-        <h5 class="card-title"><a href="/tutorials/{{ tut.title | replace: ' ', '-' }}/" class="text-decoration-none">{{ tut.title }}</a></h5>
-        <p class="card-subtitle text-muted small mb-2">{{ tut.subtitle }}</p>
-        <p class="text-secondary small mb-3">{{ tut.author }}</p>
-
-        <div class="d-flex flex-wrap gap-1">
+        <!-- Tags: type, packages, domains -->
+        <div class="d-flex flex-wrap gap-1 mt-2">
           {% if tut.tutorial_type %}
           <span class="badge rounded-pill bg-purple">{{ tut.tutorial_type }}</span>
           {% endif %}
@@ -101,6 +193,12 @@ categories:
           {% if tut.packages %}
           {% for package in tut.packages %}
           <span class="badge rounded-pill bg-primary">{{ package }}</span>
+          {% endfor %}
+          {% endif %}
+
+          {% if tut.domains %}
+          {% for domain in tut.domains %}
+          <span class="badge rounded-pill bg-teal">{{ domain }}</span>
           {% endfor %}
           {% endif %}
         </div>
@@ -119,7 +217,7 @@ categories:
 <hr>
 {% include citation.html %}
 
-<!-- Pagefind assets -->
+<!-- Pagefind UI -->
 <link href="{{ '/pagefind/pagefind-ui.css' | relative_url }}" rel="stylesheet">
 <script src="{{ '/pagefind/pagefind-ui.js' | relative_url }}"></script>
 <script src="{{ '/js/tutorial-filter.js' | relative_url }}"></script>
