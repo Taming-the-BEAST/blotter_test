@@ -112,7 +112,7 @@ required_fields:
   - author
   - level
   - title
-  - beastversion
+  - beastversion_tutorial    # BEAST2 version the tutorial was written/tested with
   - tutorial_type
   - status
 
@@ -121,6 +121,7 @@ recommended_fields:
   - subtitle
   - keywords
   - packages
+  - beastversion_package     # Most recent BEAST2 version supporting the package (auto-populated from CBAN)
   - tracerversion
   - figtreeversion
   

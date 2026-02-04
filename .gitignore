@@ -16,15 +16,25 @@ projects/
 tutorials/*
 !tutorials/tutorial_schema.yml
 !tutorials/index.html
-!tutorials/beginner/
-!tutorials/intermediate/
-!tutorials/professional/
 
 # Jekyll metadata
 .jekyll-metadata
 
-# Other files
+# OS and editor files
 .DS_Store
+.Rhistory
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.backup
+
+# Python
+venv/
+__pycache__/
+*.pyc
 
 # Secrets
 github.token
