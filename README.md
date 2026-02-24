@@ -44,7 +44,10 @@ Repositoeries from which tutorials will be included in the build can be found at
   - **Node.js** (18+) and **npm** -- for Pagefind search indexing (optional)
   - **Pagefind** binary -- for full-text search indexing (optional)
 
-  Using Docker avoids installing these manually.
+  Using Docker avoids installing these manually. Otherwise, after getting Ruby and Bundler, make sure all Ruby dependencies are installed:
+  ```
+  bundle install
+  ```
 
 #### Using Docker (recommended)
 
