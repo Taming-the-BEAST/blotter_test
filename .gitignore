@@ -17,12 +17,9 @@ tutorials/*
 !tutorials/tutorial_schema.yml
 !tutorials/index.html
 
-# Jekyll metadata
-.jekyll-metadata
-
-# OS and editor files
-.DS_Store
-.Rhistory
+# Hidden files, except .gitignore
+.*
+!/.gitignore
 
 # Logs
 *.log

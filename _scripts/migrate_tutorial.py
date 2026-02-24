@@ -101,7 +101,7 @@ class TutorialMigrator:
         return {
             'keywords': self.detect_keywords(text_lower),
             'packages': self.detect_packages(text_lower),
-            'tutorial_type': self.detect_type(text_lower),
+            'workflow': self.detect_workflow(text_lower),
             'domains': self.detect_domains(text_lower)
         }
 
@@ -148,13 +148,17 @@ class TutorialMigrator:
 
         return packages
 
-    def detect_type(self, text: str) -> str:
-        """Detect tutorial type from content."""
-        if re.search(r'introduction|getting started|basic', text):
-            return 'Core'
-        if re.search(r'case study|application', text):
-            return 'Applied'
-        return 'Model set-up'
+    def detect_workflow(self, text: str) -> str:
+        """Detect workflow type from content."""
+        if re.search(r'introduction|getting started|install|setup|first', text):
+            return 'Getting started'
+        if re.search(r'troubleshoot|debug|error|problem|fix', text):
+            return 'Troubleshooting'
+        if re.search(r'validat|verify|check|assess', text):
+            return 'Validation'
+        if re.search(r'advanced|complex|expert', text):
+            return 'Advanced analysis'
+        return 'Basic workflow'
 
     def detect_domains(self, text: str) -> List[str]:
         """Detect application domains from content."""
@@ -214,10 +218,18 @@ class TutorialMigrator:
         # Look up beastversion_package from CBAN
         beastversion_package = self.cban.get_latest_beast_version(packages)
 
+        # Rename tutorial_type -> workflow if it exists
+        if 'tutorial_type' in updated and 'workflow' not in updated:
+            updated['workflow'] = updated.pop('tutorial_type')
+
+        # Remove level if it exists (no longer used)
+        if 'level' in updated:
+            del updated['level']
+
         updated.update({
             'keywords': suggestions['keywords'],
             'packages': suggestions['packages'],
-            'tutorial_type': suggestions['tutorial_type'],
+            'workflow': suggestions['workflow'],
             'status': 'current',
             'domains': suggestions['domains']
         })

@@ -1,22 +1,18 @@
 # Tutorial Metadata Schema for Taming the BEAST
 # This file defines the valid values and structure for tutorial metadata
 
-# Valid experience levels
-levels:
-  - Beginner
-  - Intermediate
-  - Professional
-
-# Valid tutorial types
-tutorial_types:
-  - Core              # Core BEAST2 functionality tutorials
-  - Model set-up    # Tutorials focused on specific models/packages
-  - Applied           # Application-focused tutorials (domain-specific)
+# Valid workflows (what the tutorial helps you accomplish)
+workflows:
+  - Getting started        # Introduction and setup tutorials
+  - Basic workflow         # Standard analysis workflows
+  - Advanced analysis      # Complex or specialized analyses
+  - Troubleshooting        # Debugging and problem-solving
+  - Validation             # Result validation and verification
 
 # Valid status values
 status_values:
   - current           # Active, up-to-date tutorial
-  - legacy            # Outdated but kept for reproducibility
+  - deprecated        # Outdated but kept for reproducibility
 
 # Recommended keyword taxonomy (extensible)
 keyword_taxonomy:
@@ -43,19 +39,11 @@ keyword_taxonomy:
     
   methods:
     - Bayesian inference
-    - MCMC
     - model selection
     - marginal likelihood
     - path sampling
     - parameter estimation
-    
-  workflows:
-    - getting started
-    - basic workflow
-    - advanced analysis
-    - troubleshooting
-    - validation
-    
+
   data_types:
     - nucleotide
     - amino acid
@@ -102,7 +90,6 @@ domains:
   - epidemiology
   - phylogeography
   - palaeontology
-  - speciation
   - population genetics
   - language evolution
   - macroevolution
@@ -110,10 +97,9 @@ domains:
 # Required fields
 required_fields:
   - author
-  - level
   - title
   - beastversion_tutorial    # BEAST2 version the tutorial was written/tested with
-  - tutorial_type
+  - workflow
   - status
 
 # Recommended fields
@@ -128,8 +114,8 @@ recommended_fields:
 # Optional fields
 optional_fields:
   - domains
-  - legacy_reason
-  - legacy_alternative
+  - deprecated_reason
+  - deprecated_alternative
   - related_tutorials
   - prerequisites
   - estimated_time
@@ -142,6 +128,6 @@ validation_rules:
   packages:
     min: 0
     max: 5
-  legacy:
-    requires:           # If status is "legacy", these fields are required
-      - legacy_reason
+  deprecated:
+    requires:           # If status is "deprecated", these fields are required
+      - deprecated_reason

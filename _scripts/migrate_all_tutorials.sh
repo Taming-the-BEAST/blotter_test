@@ -3,11 +3,13 @@
 # List of tutorial repositories
 TUTORIALS=(
   # "Introduction-to-BEAST2"
-  "Structured-coalescent"
-  "Skyline-plots"
+  # "Structured-coalescent"
+  # "Skyline-plots"
   # "MEP-tutorial"
   # "StarBeast-Tutorial"
   # "Substitution-model-averaging"
+  # StarBeast-Tutorial
+  StarBeast3-Tutorial
   # Add all other tutorials...
 )
 

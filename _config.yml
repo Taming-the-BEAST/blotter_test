@@ -64,17 +64,6 @@ collections:
     output: true
     permalink: /tutorials/:name/
 
-# Tutorial categorization
-tutorial_categories:
-  levels:
-    - Beginner
-    - Intermediate
-    - Professional
-  types:
-    - Core
-    - Model set-up
-    - Applied
-
 scholar:
   style: apa
   locale: en
@@ -105,6 +94,8 @@ scholar:
 
 tutorials:
   - taming-the-beast/Introduction-to-BEAST2
+  - taming-the-beast/StarBeast-Tutorial
+  - taming-the-beast/StarBeast3-Tutorial
 #  - taming-the-beast/Troubleshooting-convergence-issues
 #  - taming-the-beast/Troubleshooting-initialization-issues
 #  - nicfel/AIM-Tutorial

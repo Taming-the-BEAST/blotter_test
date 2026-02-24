@@ -3,17 +3,19 @@
 
   // Filters now support multiple selections (arrays)
   const filters = {
-    level: [],      // empty = all
-    type: [],
+    workflow: [],   // empty = all
     package: [],
     domain: [],
     search: '',
+    fulltextSearch: '',
+    fulltextMatches: null,  // null = no fulltext search active, Set = matching URLs
     showLegacy: false
   };
 
   let currentSort = 'date';
   let searchMode = 'keyword';
-  let pagefindInstance = null;
+  let pagefind = null;
+  let searchDebounceTimer = null;
 
   // Initialize
   document.addEventListener('DOMContentLoaded', function() {
@@ -27,6 +29,25 @@
     initPagefind();
     applyFilters();
   });
+
+  async function initPagefind() {
+    try {
+      console.log('Loading Pagefind...');
+      // Get baseurl from data attribute (for subpath deployments like /web-testing/)
+      const baseurl = document.querySelector('.tutorial-index')?.dataset?.baseurl || '';
+      const pagefindPath = baseurl + '/pagefind/pagefind.js';
+      console.log('Pagefind path:', pagefindPath);
+      pagefind = await import(pagefindPath);
+      console.log('Pagefind module loaded:', pagefind);
+      await pagefind.init();
+      console.log('Pagefind initialized');
+      return true;
+    } catch (e) {
+      console.error('Pagefind not available:', e);
+      pagefind = null;
+      return false;
+    }
+  }
 
   function setupFilterButtons() {
     document.querySelectorAll('[data-filter]').forEach(btn => {
@@ -89,7 +110,6 @@
     if (!grid) return;
 
     const cards = Array.from(grid.querySelectorAll('.tutorial-card'));
-    const levelOrder = { 'Beginner': 1, 'Intermediate': 2, 'Professional': 3 };
 
     cards.sort((a, b) => {
       switch (currentSort) {
@@ -102,11 +122,6 @@
           const titleA = a.dataset.title || '';
           const titleB = b.dataset.title || '';
           return titleA.localeCompare(titleB);
-
-        case 'level':
-          const levelA = levelOrder[a.dataset.level] || 99;
-          const levelB = levelOrder[b.dataset.level] || 99;
-          return levelA - levelB;
 
         default:
           return 0;
@@ -140,6 +155,21 @@
     const modeRadios = document.querySelectorAll('input[name="search-mode"]');
     const keywordContainer = document.getElementById('keyword-search-container');
     const fulltextContainer = document.getElementById('fulltext-search-container');
+    const fulltextInput = document.getElementById('fulltext-search');
+    const fulltextStatus = document.getElementById('fulltext-status');
+
+    // Setup fulltext search input
+    if (fulltextInput) {
+      fulltextInput.addEventListener('input', function() {
+        const query = this.value.trim();
+
+        // Debounce search
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          performFulltextSearch(query);
+        }, 300);
+      });
+    }
 
     modeRadios.forEach(radio => {
       radio.addEventListener('change', function() {
@@ -148,19 +178,96 @@
         if (searchMode === 'keyword') {
           keywordContainer.style.display = 'block';
           fulltextContainer.style.display = 'none';
-          // Show all cards, apply keyword filter
+          // Clear fulltext search when switching back
+          filters.fulltextSearch = '';
+          filters.fulltextMatches = null;
+          if (fulltextInput) fulltextInput.value = '';
+          if (fulltextStatus) fulltextStatus.textContent = '';
           applyFilters();
         } else {
           keywordContainer.style.display = 'none';
           fulltextContainer.style.display = 'block';
-          // Clear keyword search and show all cards
+          // Clear keyword search when switching
           filters.search = '';
-          const searchInput = document.getElementById('tutorial-search');
-          if (searchInput) searchInput.value = '';
+          const keywordInput = document.getElementById('tutorial-search');
+          if (keywordInput) keywordInput.value = '';
+
+          if (!pagefind) {
+            initPagefind().then((success) => {
+              if (fulltextStatus && !success) {
+                fulltextStatus.textContent = 'Full-text search not available';
+              }
+            });
+          }
           applyFilters();
         }
       });
     });
+  }
+
+  async function performFulltextSearch(query) {
+    const fulltextStatus = document.getElementById('fulltext-status');
+    console.log('performFulltextSearch called with query:', query);
+
+    if (!query) {
+      filters.fulltextSearch = '';
+      filters.fulltextMatches = null;
+      if (fulltextStatus) fulltextStatus.textContent = '';
+      applyFilters();
+      return;
+    }
+
+    if (!pagefind) {
+      console.log('pagefind not available, attempting to initialize...');
+      const success = await initPagefind();
+      if (!success) {
+        if (fulltextStatus) fulltextStatus.textContent = 'Full-text search not available';
+        return;
+      }
+    }
+
+    filters.fulltextSearch = query;
+    if (fulltextStatus) fulltextStatus.textContent = 'Searching...';
+
+    try {
+      // Build filter object for Pagefind
+      const pfFilters = {};
+      if (filters.workflow.length > 0) {
+        pfFilters.workflow = { any: filters.workflow };
+      }
+      if (filters.package.length > 0) {
+        pfFilters.package = { any: filters.package };
+      }
+      if (filters.domain.length > 0) {
+        pfFilters.domain = { any: filters.domain };
+      }
+
+      console.log('Searching with filters:', pfFilters);
+      const search = await pagefind.search(query, { filters: pfFilters });
+      console.log('Search results:', search.results.length, 'results');
+
+      // Collect matching URLs
+      const matchingUrls = new Set();
+      for (const result of search.results) {
+        const data = await result.data();
+        // Extract tutorial path from URL (e.g., /tutorials/Introduction-to-BEAST2/)
+        const url = data.url;
+        console.log('Match URL:', url, 'Title:', data.meta?.title);
+        matchingUrls.add(url);
+      }
+
+      filters.fulltextMatches = matchingUrls;
+      console.log('fulltextMatches set to:', [...matchingUrls]);
+
+      if (fulltextStatus) {
+        fulltextStatus.textContent = `${search.results.length} result${search.results.length !== 1 ? 's' : ''} found`;
+      }
+
+      applyFilters();
+    } catch (e) {
+      console.error('Search error:', e);
+      if (fulltextStatus) fulltextStatus.textContent = 'Search error';
+    }
   }
 
   function setupKeywordChips() {
@@ -178,35 +285,20 @@
     });
   }
 
-  function initPagefind() {
-    const pagefindContainer = document.getElementById('pagefind-search');
-    if (pagefindContainer && typeof PagefindUI !== 'undefined') {
-      pagefindInstance = new PagefindUI({
-        element: '#pagefind-search',
-        showSubResults: true,
-        showImages: false,
-        excerptLength: 15
-      });
-    }
-  }
-
   function applyFilters() {
     const cards = document.querySelectorAll('.tutorial-card');
     let visibleCount = 0;
 
+    if (searchMode === 'fulltext') {
+      console.log('applyFilters: searchMode=fulltext, fulltextMatches=', filters.fulltextMatches);
+    }
+
     cards.forEach(card => {
       let show = true;
 
-      // Level filter (OR logic - match any selected)
-      if (filters.level.length > 0) {
-        if (!filters.level.includes(card.dataset.level)) {
-          show = false;
-        }
-      }
-
-      // Type filter
-      if (filters.type.length > 0) {
-        if (!filters.type.includes(card.dataset.type)) {
+      // Workflow filter (OR logic - match any selected)
+      if (filters.workflow.length > 0) {
+        if (!filters.workflow.includes(card.dataset.workflow)) {
           show = false;
         }
       }
@@ -229,16 +321,39 @@
         }
       }
 
-      // Search filter
-      if (filters.search) {
+      // Keyword search filter (simple text match)
+      if (searchMode === 'keyword' && filters.search) {
         const searchText = (card.dataset.search || '').toLowerCase();
         if (!searchText.includes(filters.search)) {
           show = false;
         }
       }
 
-      // Legacy filter
-      if (!filters.showLegacy && card.dataset.status === 'legacy') {
+      // Fulltext search filter (Pagefind results)
+      if (searchMode === 'fulltext' && filters.fulltextMatches !== null) {
+        // Get the tutorial URL from the card's link
+        const link = card.querySelector('.card-title a');
+        if (link) {
+          const cardUrl = link.getAttribute('href');
+          // Check if this tutorial's URL is in the Pagefind results
+          let matched = false;
+          for (const matchUrl of filters.fulltextMatches) {
+            // Normalize URLs for comparison
+            const normalizedMatchUrl = matchUrl.replace('/index.html', '/').replace(/\/$/, '');
+            const normalizedCardUrl = cardUrl.replace(/\/$/, '');
+            if (normalizedMatchUrl.includes(normalizedCardUrl) || normalizedCardUrl.includes(normalizedMatchUrl)) {
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            show = false;
+          }
+        }
+      }
+
+      // Deprecated filter
+      if (!filters.showLegacy && card.dataset.status === 'deprecated') {
         show = false;
       }
 
@@ -258,8 +373,7 @@
   function updateURL() {
     const params = new URLSearchParams();
 
-    if (filters.level.length > 0) params.set('level', filters.level.join(','));
-    if (filters.type.length > 0) params.set('type', filters.type.join(','));
+    if (filters.workflow.length > 0) params.set('workflow', filters.workflow.join(','));
     if (filters.package.length > 0) params.set('package', filters.package.join(','));
     if (filters.domain.length > 0) params.set('domain', filters.domain.join(','));
     if (filters.search) params.set('search', filters.search);
@@ -276,11 +390,8 @@
     const params = new URLSearchParams(window.location.search);
 
     // Parse comma-separated values into arrays
-    if (params.has('level')) {
-      filters.level = params.get('level').split(',');
-    }
-    if (params.has('type')) {
-      filters.type = params.get('type').split(',');
+    if (params.has('workflow')) {
+      filters.workflow = params.get('workflow').split(',');
     }
     if (params.has('package')) {
       filters.package = params.get('package').split(',');
@@ -314,7 +425,7 @@
     }
 
     // Activate filter buttons from URL
-    ['level', 'type', 'package', 'domain'].forEach(filterType => {
+    ['workflow', 'package', 'domain'].forEach(filterType => {
       if (filters[filterType].length > 0) {
         // Deactivate "All" button
         const allBtn = document.querySelector(`[data-filter="${filterType}"][data-value="all"]`);

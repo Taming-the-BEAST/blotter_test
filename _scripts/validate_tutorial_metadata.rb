@@ -17,16 +17,15 @@ class TutorialMetadataValidator
   def validate(tutorial_frontmatter)
     @errors = []
     @warnings = []
-    
+
     validate_required_fields(tutorial_frontmatter)
-    # validate_level(tutorial_frontmatter)
-    validate_tutorial_type(tutorial_frontmatter)
+    validate_workflow(tutorial_frontmatter)
     validate_status(tutorial_frontmatter)
     validate_keywords(tutorial_frontmatter)
     validate_packages(tutorial_frontmatter)
     validate_legacy_fields(tutorial_frontmatter)
     check_recommended_fields(tutorial_frontmatter)
-    
+
     {
       valid: @errors.empty?,
       errors: @errors,
@@ -44,21 +43,13 @@ class TutorialMetadataValidator
     end
   end
   
-  # def validate_level(frontmatter)
-  #   if frontmatter['level']
-  #     unless @schema['levels'].include?(frontmatter['level'])
-  #       @errors << "Invalid level '#{frontmatter['level']}'. Must be one of: #{@schema['levels'].join(', ')}"
-  #     end
-  #   end
-  # end
-  
-  def validate_tutorial_type(frontmatter)
-    if frontmatter['tutorial_type']
-      unless @schema['tutorial_types'].include?(frontmatter['tutorial_type'])
-        @errors << "Invalid tutorial_type '#{frontmatter['tutorial_type']}'. Must be one of: #{@schema['tutorial_types'].join(', ')}"
+  def validate_workflow(frontmatter)
+    if frontmatter['workflow']
+      unless @schema['workflows'].include?(frontmatter['workflow'])
+        @errors << "Invalid workflow '#{frontmatter['workflow']}'. Must be one of: #{@schema['workflows'].join(', ')}"
       end
     else
-      @warnings << "Recommended field 'tutorial_type' is missing"
+      @warnings << "Required field 'workflow' is missing"
     end
   end
   
@@ -128,13 +119,13 @@ class TutorialMetadataValidator
   end
   
   def validate_legacy_fields(frontmatter)
-    if frontmatter['status'] == 'legacy'
-      unless frontmatter['legacy_reason'] && !frontmatter['legacy_reason'].to_s.strip.empty?
-        @errors << "Legacy tutorials must include 'legacy_reason'"
+    if frontmatter['status'] == 'deprecated'
+      unless frontmatter['deprecated_reason'] && !frontmatter['deprecated_reason'].to_s.strip.empty?
+        @errors << "Deprecated tutorials must include 'deprecated_reason'"
       end
-      
-      unless frontmatter['legacy_alternative']
-        @warnings << "Legacy tutorial should provide 'legacy_alternative' link to updated tutorial if available"
+
+      unless frontmatter['deprecated_alternative']
+        @warnings << "Deprecated tutorial should provide 'deprecated_alternative' link to updated tutorial if available"
       end
     end
   end

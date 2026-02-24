@@ -47,13 +47,13 @@ module Tutorials
 
 	def self.find_files(prefix, wildcard)
 
-		ignore_list = ["index.md", "index.mdown"]
+		ignore_list = ["README.md", "README.mdown", "readme.md"]
 
 		file_list = Dir.glob(prefix+"/"+wildcard)
-		ignore_list.each do |str| 
+		ignore_list.each do |str|
 			file_list.delete(prefix+"/"+str)
 		end
-		
+
 		return file_list
 	end
 
@@ -85,17 +85,19 @@ module Tutorials
 				tutorial_default_branch = octokit_repo.default_branch
 				#puts "\t\tDefault branch #{tutorial_default_branch}"
 
-				# load tutorial header metadata
+				# load tutorial header metadata from README.md
 				# overwrite description with tutorial header description if not empty
-				tutorial_header = YAML.load_file("tutorials/#{reponame}/index.md")
+				tutorial_header = YAML.load_file("tutorials/#{reponame}/README.md")
 				tutorial_level  = tutorial_header["level"]
 				tutorial_title  = tutorial_header["title"]
 				tutorial_author = tutorial_header["author"]
 				tutorial_beast  = tutorial_header["beastversion"]
-				tutorial_type   = tutorial_header["tutorial_type"]
+				tutorial_workflow = tutorial_header["workflow"] || tutorial_header["tutorial_type"]
 				tutorial_packages = tutorial_header["packages"] || []
 				tutorial_keywords = tutorial_header["keywords"] || []
 				tutorial_status = tutorial_header["status"]
+				tutorial_deprecated_reason = tutorial_header["deprecated_reason"]
+				tutorial_deprecated_alternative = tutorial_header["deprecated_alternative"]
 				tutorial_domains = tutorial_header["domains"] || []
 				if (tutorial_header["subtitle"] != nil && tutorial_description != tutorial_header["subtitle"])
 				   tutorial_description = tutorial_header["subtitle"]
@@ -169,10 +171,12 @@ module Tutorials
 					"contributors" => tutorial_contributors,
 					"level" => tutorial_level,
 					"beastversion" => tutorial_beast,
-					"tutorial_type" => tutorial_type,
+					"workflow" => tutorial_workflow,
 					"packages" => tutorial_packages,
 					"keywords" => tutorial_keywords,
 					"status" => tutorial_status,
+					"deprecated_reason" => tutorial_deprecated_reason,
+					"deprecated_alternative" => tutorial_deprecated_alternative,
 					"domains" => tutorial_domains,
 					"commits" => tutorial_commits,
 					"default_branch" => tutorial_default_branch,

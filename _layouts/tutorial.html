@@ -38,9 +38,9 @@ categories:
 				{{ page.level }}
 			</span>
 			{% endif %}
-			{% if page.status == 'legacy' %}
-			<span class="badge badge-legacy" style="background: #ffc107; color: #333; padding: 5px 10px; margin-right: 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-				Legacy
+			{% if page.status == 'deprecated' %}
+			<span class="badge badge-deprecated" style="background: #999; color: #fff; padding: 5px 10px; margin-right: 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+				Deprecated
 			</span>
 			{% endif %}
 			{% if page.tutorial_type %}
@@ -55,17 +55,17 @@ categories:
 			{% endfor %}
 		</div>
 
-		<!-- Legacy warning -->
-		{% if page.status == 'legacy' %}
-		<div class="alert alert-warning" style="padding: 15px; margin: 20px 0; border-radius: 6px; border-left: 4px solid #ffc107; background: #fff3cd; color: #856404;">
-			<strong>⚠️ Legacy Tutorial:</strong>
-			{% if page.legacy_reason %}
-			{{ page.legacy_reason }}
+		<!-- Deprecated warning -->
+		{% if page.status == 'deprecated' %}
+		<div class="alert alert-secondary" style="padding: 15px; margin: 20px 0; border-radius: 6px; border-left: 4px solid #999; background: #f0f0f0; color: #555;">
+			<strong>⚠️ Deprecated Tutorial:</strong>
+			{% if page.deprecated_reason %}
+			{{ page.deprecated_reason }}
 			{% else %}
-			This tutorial is marked as legacy and may be outdated.
+			This tutorial is deprecated and may be outdated.
 			{% endif %}
-			{% if page.legacy_alternative %}
-			<br><a href="{{ page.legacy_alternative }}">View recommended alternative →</a>
+			{% if page.deprecated_alternative %}
+			<br><a href="{{ page.deprecated_alternative }}">View recommended alternative →</a>
 			{% endif %}
 		</div>
 		{% endif %}
@@ -287,14 +287,16 @@ categories:
 
 	<div class="col-md-8">
 		<div class="post" data-pagefind-body>
-			<!-- Pagefind meta tags for filtering -->
-			<div data-pagefind-meta="level:{{ page.level }}"></div>
-			<div data-pagefind-meta="type:{{ page.tutorial_type }}"></div>
+			<!-- Pagefind meta and filter tags -->
+			<h1 data-pagefind-meta="title" style="display:none;">{{ page.title }}</h1>
+			{% if page.workflow %}
+			<span data-pagefind-filter="workflow" style="display:none;">{{ page.workflow }}</span>
+			{% endif %}
 			{% for package in page.packages %}
-			<div data-pagefind-meta="package:{{ package }}"></div>
+			<span data-pagefind-filter="package" style="display:none;">{{ package }}</span>
 			{% endfor %}
-			{% for keyword in page.keywords %}
-			<div data-pagefind-meta="keyword:{{ keyword }}"></div>
+			{% for domain in page.domains %}
+			<span data-pagefind-filter="domain" style="display:none;">{{ domain }}</span>
 			{% endfor %}
 
 			<p>

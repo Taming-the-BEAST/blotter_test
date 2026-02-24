@@ -27,23 +27,7 @@
 ---
 
 ## Bugs
-- ~~Check tutorial names are displayed correctly everywhere (also in recently updated tutorials). There were issues when the tutorial name and the github repository were not the same.~~
-	- Updated the whole tutorial structure
 
 
 ## Tutorial display
 
-- Packages are mising from selection
-- search should display available keywords
-- limit min/max number of keywords
-- show domain (epi/macro/etc) as selection or keyword?
-- check for requird fields
-- warn about not having recommended fields
-- how to force udate when we don't host the branch?
-- allow for several packages to be selected
-- should we leave only typo, no experience?
-- make the whole text instead of desvription searcheable
-- pull keywords out of search and have them as category
-- should we add sorting?
-	- created/updated
-	- alphabetical
