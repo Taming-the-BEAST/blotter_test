@@ -14,6 +14,9 @@ jobs:
   build_and_publish:
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - name: Checkout the repo
@@ -29,11 +32,11 @@ jobs:
       with:
         platforms: linux/amd64,linux/arm64
     - name: Build and push Docker image
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v5
       with:
         context: .
         file: ./Dockerfile
-        push: true 
+        push: ${{ github.event_name != 'pull_request' }}
         platforms: linux/amd64,linux/arm64
         tags: ghcr.io/taming-the-beast/ttb-web-build-env:latest
     - name: Verify the image was pushed
