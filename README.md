@@ -58,7 +58,7 @@ Repositoeries from which tutorials will be included in the build can be found at
   echo YOUR_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
   ```
 
-  Alternatively, build the image locally:
+  Alternatively, build the image locally from Dockerfile:
   ```
   docker build -t ttb-web-build-env .
   ```
