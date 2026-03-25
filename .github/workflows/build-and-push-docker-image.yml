@@ -3,10 +3,10 @@ name: Create and push docker image for TTB website building environment
 on:
   push:
     branches: [ "master" ]
-    paths: ["Dockerfile"]
+    paths: ["Dockerfile", "Gemfile", "Gemfile.lock", "package.json", "package-lock.json"]
   pull_request:
     branches: [ "master" ]
-    paths: ["Dockerfile"]
+    paths: ["Dockerfile", "Gemfile", "Gemfile.lock", "package.json", "package-lock.json"]
   workflow_dispatch:
 
 jobs:
