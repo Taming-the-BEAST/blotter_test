@@ -388,11 +388,24 @@ figcaption {
 	position: fixed;
 	bottom: 0%;
 	width: 100%;
-	height: 95px;
+	min-height: 75px;
 	padding-top: 10px;
 	border: 1px solid transparent;
 	border-color: $navbar-custom-border;
 	background-color: $navbar-custom-bg;
+}
+
+.footer-acknowledgement {
+  @extend .note;
+  @extend .text-gray;
+  font-size: 0.65em;
+  padding-top: 10px;
+  line-height: 1.4;
+  text-align: justify;
+}
+
+.footer-logo {
+  text-align: center;
 }
 
 .footernav {
