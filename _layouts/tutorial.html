@@ -288,7 +288,17 @@ categories:
 	<div class="col-md-8">
 		<div class="post" data-pagefind-body>
 			<!-- Pagefind meta and filter tags -->
-			<h1 data-pagefind-meta="title" style="display:none;">{{ page.title }}</h1>
+			<!-- Weighted so a title/keyword/subtitle hit outranks a body-text hit.
+			     Pagefind default weight is 1; headings inside {{ content }} are
+			     auto-weighted by level (h1 highest), so only these need boosting. -->
+			<h1 data-pagefind-meta="title" data-pagefind-weight="10" style="display:none;">{{ page.title }}</h1>
+			{% if page.keywords.size > 0 %}
+			<div data-pagefind-weight="7" style="display:none;">{{ page.keywords | join: ' ' }}</div>
+			{% endif %}
+			{% assign subtitle = tutorial.description | default: page.subtitle %}
+			{% if subtitle %}
+			<div data-pagefind-weight="5" style="display:none;">{{ subtitle }}</div>
+			{% endif %}
 			{% if page.workflow %}
 			<span data-pagefind-filter="workflow" style="display:none;">{{ page.workflow }}</span>
 			{% endif %}

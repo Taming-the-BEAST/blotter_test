@@ -8,8 +8,7 @@
     domain: [],
     search: '',
     fulltextSearch: '',
-    fulltextMatches: null,  // null = no fulltext search active, Set = matching URLs
-    fulltextResults: null,  // null = no fulltext search active, Array = [{url, excerpt}, ...]
+    fulltextResults: null,  // null = no search active, else Map<slug, excerpt> in relevance order
     showLegacy: false
   };
 
@@ -181,7 +180,6 @@
           fulltextContainer.style.display = 'none';
           // Clear fulltext search when switching back
           filters.fulltextSearch = '';
-          filters.fulltextMatches = null;
           filters.fulltextResults = null;
           if (fulltextInput) fulltextInput.value = '';
           if (fulltextStatus) fulltextStatus.textContent = '';
@@ -213,7 +211,6 @@
 
     if (!query) {
       filters.fulltextSearch = '';
-      filters.fulltextMatches = null;
       filters.fulltextResults = null;
       if (fulltextStatus) fulltextStatus.textContent = '';
       applyFilters();
@@ -249,21 +246,16 @@
       const search = await pagefind.search(query, { filters: pfFilters });
       console.log('Search results:', search.results.length, 'results');
 
-      // Collect matching URLs and excerpts
-      const matchingUrls = new Set();
-      const fulltextResults = [];
+      // Collect results as a slug -> excerpt Map, in Pagefind's relevance order.
+      // Membership (is this tutorial a match?) and excerpt lookup are now both O(1).
+      const results = new Map();
       for (const result of search.results) {
         const data = await result.data();
-        // Extract tutorial path from URL (e.g., /tutorials/Introduction-to-BEAST2/)
-        const url = data.url;
-        console.log('Match URL:', url, 'Title:', data.meta?.title);
-        matchingUrls.add(url);
-        fulltextResults.push({ url: url, excerpt: data.excerpt });
+        results.set(slugFromUrl(data.url), data.excerpt);
       }
 
-      filters.fulltextMatches = matchingUrls;
-      filters.fulltextResults = fulltextResults;
-      console.log('fulltextMatches set to:', [...matchingUrls]);
+      filters.fulltextResults = results;
+      console.log('fulltextResults set to:', [...results.keys()]);
 
       if (fulltextStatus) {
         fulltextStatus.textContent = `${search.results.length} result${search.results.length !== 1 ? 's' : ''} found`;
@@ -289,6 +281,38 @@
         }
       });
     });
+  }
+
+  // Every tutorial is uniquely identified by its slug (the last path segment),
+  // regardless of baseurl prefix, trailing slash, or index.html.
+  function slugFromUrl(url) {
+    return url
+      .replace(/index\.html$/, '')
+      .split('/')
+      .filter(Boolean)
+      .pop() || '';
+  }
+
+  // In full-text mode, Pagefind returns results already sorted by relevance.
+  // Reorder the card grid to match so the strongest match sits first. Iterating
+  // the results Map (insertion-ordered by relevance) gives the ranking directly.
+  function reorderCardsByRelevance() {
+    const grid = document.getElementById('tutorial-grid');
+    if (!grid || !filters.fulltextResults) return;
+
+    const rankBySlug = new Map(
+      [...filters.fulltextResults.keys()].map((slug, i) => [slug, i])
+    );
+    const rankFor = (card) => {
+      const link = card.querySelector('.card-title a');
+      const slug = link ? slugFromUrl(link.getAttribute('href')) : '';
+      // non-matching (hidden) cards have no rank → sink to the bottom
+      return rankBySlug.has(slug) ? rankBySlug.get(slug) : Infinity;
+    };
+
+    const cards = Array.from(grid.querySelectorAll('.tutorial-card'));
+    cards.sort((a, b) => rankFor(a) - rankFor(b));
+    cards.forEach(card => grid.appendChild(card));
   }
 
   function updateCardExcerpt(card, excerptHtml) {
@@ -321,7 +345,8 @@
     let visibleCount = 0;
 
     if (searchMode === 'fulltext') {
-      console.log('applyFilters: searchMode=fulltext, fulltextMatches=', filters.fulltextMatches);
+      console.log('applyFilters: searchMode=fulltext, matches=',
+        filters.fulltextResults ? [...filters.fulltextResults.keys()] : null);
     }
 
     cards.forEach(card => {
@@ -362,35 +387,13 @@
 
       // Fulltext search filter (Pagefind results)
       let fulltextExcerpt = null;
-      if (searchMode === 'fulltext' && filters.fulltextMatches !== null) {
-        // Get the tutorial URL from the card's link
+      if (searchMode === 'fulltext' && filters.fulltextResults !== null) {
         const link = card.querySelector('.card-title a');
-        if (link) {
-          const cardUrl = link.getAttribute('href');
-          // Check if this tutorial's URL is in the Pagefind results
-          let matched = false;
-          for (const matchUrl of filters.fulltextMatches) {
-            // Normalize URLs for comparison
-            const normalizedMatchUrl = matchUrl.replace('/index.html', '/').replace(/\/$/, '');
-            const normalizedCardUrl = cardUrl.replace(/\/$/, '');
-            if (normalizedMatchUrl.includes(normalizedCardUrl) || normalizedCardUrl.includes(normalizedMatchUrl)) {
-              matched = true;
-              break;
-            }
-          }
-          if (!matched) {
-            show = false;
-          } else if (filters.fulltextResults) {
-            // Look up the excerpt for this card using the same URL normalization
-            const normalizedCardUrl = cardUrl.replace(/\/$/, '');
-            for (const result of filters.fulltextResults) {
-              const normalizedMatchUrl = result.url.replace('/index.html', '/').replace(/\/$/, '');
-              if (normalizedMatchUrl.includes(normalizedCardUrl) || normalizedCardUrl.includes(normalizedMatchUrl)) {
-                fulltextExcerpt = result.excerpt;
-                break;
-              }
-            }
-          }
+        const slug = link ? slugFromUrl(link.getAttribute('href')) : '';
+        if (filters.fulltextResults.has(slug)) {
+          fulltextExcerpt = filters.fulltextResults.get(slug);
+        } else {
+          show = false;
         }
       }
 
@@ -410,6 +413,13 @@
     const countEl = document.getElementById('tutorial-count');
     if (countEl) {
       countEl.textContent = visibleCount;
+    }
+
+    // Order cards: by Pagefind relevance in full-text mode, else by the active sort.
+    if (searchMode === 'fulltext' && filters.fulltextResults) {
+      reorderCardsByRelevance();
+    } else {
+      sortCards();
     }
 
     updateURL();
