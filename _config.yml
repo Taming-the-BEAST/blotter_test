@@ -40,6 +40,8 @@ exclude:
   - ".venv"
   - ".venv/**"
   - "_scripts"
+  - ".agents"
+  - ".claude"
 
 defaults:
   -

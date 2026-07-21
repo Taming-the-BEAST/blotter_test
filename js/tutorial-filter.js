@@ -9,6 +9,7 @@
     search: '',
     fulltextSearch: '',
     fulltextMatches: null,  // null = no fulltext search active, Set = matching URLs
+    fulltextResults: null,  // null = no fulltext search active, Array = [{url, excerpt}, ...]
     showLegacy: false
   };
 
@@ -181,6 +182,7 @@
           // Clear fulltext search when switching back
           filters.fulltextSearch = '';
           filters.fulltextMatches = null;
+          filters.fulltextResults = null;
           if (fulltextInput) fulltextInput.value = '';
           if (fulltextStatus) fulltextStatus.textContent = '';
           applyFilters();
@@ -212,6 +214,7 @@
     if (!query) {
       filters.fulltextSearch = '';
       filters.fulltextMatches = null;
+      filters.fulltextResults = null;
       if (fulltextStatus) fulltextStatus.textContent = '';
       applyFilters();
       return;
@@ -246,17 +249,20 @@
       const search = await pagefind.search(query, { filters: pfFilters });
       console.log('Search results:', search.results.length, 'results');
 
-      // Collect matching URLs
+      // Collect matching URLs and excerpts
       const matchingUrls = new Set();
+      const fulltextResults = [];
       for (const result of search.results) {
         const data = await result.data();
         // Extract tutorial path from URL (e.g., /tutorials/Introduction-to-BEAST2/)
         const url = data.url;
         console.log('Match URL:', url, 'Title:', data.meta?.title);
         matchingUrls.add(url);
+        fulltextResults.push({ url: url, excerpt: data.excerpt });
       }
 
       filters.fulltextMatches = matchingUrls;
+      filters.fulltextResults = fulltextResults;
       console.log('fulltextMatches set to:', [...matchingUrls]);
 
       if (fulltextStatus) {
@@ -283,6 +289,31 @@
         }
       });
     });
+  }
+
+  function updateCardExcerpt(card, excerptHtml) {
+    const cardBody = card.querySelector('.card-body');
+    if (!cardBody) return;
+
+    let excerptEl = cardBody.querySelector('.tutorial-fulltext-excerpt');
+
+    if (!excerptHtml) {
+      // Nothing to show: clear/hide the excerpt element (but keep it removed, not lingering)
+      if (excerptEl) {
+        excerptEl.innerHTML = '';
+        excerptEl.style.display = 'none';
+      }
+      return;
+    }
+
+    if (!excerptEl) {
+      excerptEl = document.createElement('div');
+      excerptEl.className = 'tutorial-fulltext-excerpt text-muted small mt-2';
+      cardBody.appendChild(excerptEl);
+    }
+
+    excerptEl.innerHTML = excerptHtml;
+    excerptEl.style.display = 'block';
   }
 
   function applyFilters() {
@@ -330,6 +361,7 @@
       }
 
       // Fulltext search filter (Pagefind results)
+      let fulltextExcerpt = null;
       if (searchMode === 'fulltext' && filters.fulltextMatches !== null) {
         // Get the tutorial URL from the card's link
         const link = card.querySelector('.card-title a');
@@ -348,6 +380,16 @@
           }
           if (!matched) {
             show = false;
+          } else if (filters.fulltextResults) {
+            // Look up the excerpt for this card using the same URL normalization
+            const normalizedCardUrl = cardUrl.replace(/\/$/, '');
+            for (const result of filters.fulltextResults) {
+              const normalizedMatchUrl = result.url.replace('/index.html', '/').replace(/\/$/, '');
+              if (normalizedMatchUrl.includes(normalizedCardUrl) || normalizedCardUrl.includes(normalizedMatchUrl)) {
+                fulltextExcerpt = result.excerpt;
+                break;
+              }
+            }
           }
         }
       }
@@ -359,6 +401,9 @@
 
       card.style.display = show ? 'block' : 'none';
       if (show) visibleCount++;
+
+      // Render (or clear) the fulltext match excerpt
+      updateCardExcerpt(card, (searchMode === 'fulltext' && show) ? fulltextExcerpt : null);
     });
 
     // Update count
