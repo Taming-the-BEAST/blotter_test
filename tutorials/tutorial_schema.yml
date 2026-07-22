@@ -83,6 +83,7 @@ packages:
   - Babel              # Multi-language support
   - BEASTvntr          # VNTR analysis
   - GEO_SPHERE         # Spherical geometry for phylogeography
+  - TiDeTree
 
 # Application domains
 domains:
@@ -93,6 +94,7 @@ domains:
   - population genetics
   - language evolution
   - macroevolution
+  - single-cell
 
 # Required fields
 required_fields:
