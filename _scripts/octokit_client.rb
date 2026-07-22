@@ -27,7 +27,13 @@ module OctokitClient
 	end
 
 	def self.build
-		Octokit::Client.new(:netrc => true, :access_token => ENV['GITHUB_TOKEN'], :middleware => MIDDLEWARE)
+		token = ENV['GITHUB_TOKEN']
+		if token.nil? || token.strip.empty?
+			abort "ERROR: GITHUB_TOKEN is not set. Without it, GitHub API requests are " \
+			      "capped at 60/hour and the fetch will 403 partway through. " \
+			      "Fix: export GITHUB_TOKEN=ghp_your_token_here"
+		end
+		Octokit::Client.new(:netrc => true, :access_token => token, :middleware => MIDDLEWARE)
 	end
 
 end
