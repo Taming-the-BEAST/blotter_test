@@ -19,6 +19,7 @@
 
 require 'octokit'
 require 'yaml'
+require_relative 'octokit_client'
 
 module Projects
 
@@ -31,7 +32,7 @@ module Projects
 
 		puts "Generating projects"
 		# create octokit client
-		client = Octokit::Client.new(:netrc => true, :access_token => ENV['GITHUB_TOKEN'])			
+		client = OctokitClient.build
 
 		project_data = Array.new
 		if projects_array.length > 0

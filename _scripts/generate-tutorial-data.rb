@@ -42,6 +42,7 @@
   
 require 'octokit'
 require 'yaml'
+require_relative 'octokit_client'
 
 module Tutorials
 
@@ -66,7 +67,7 @@ module Tutorials
 
 		puts "Generating tutorials"
 		# create octokit client
-		client = Octokit::Client.new(:netrc => true, :access_token => ENV['GITHUB_TOKEN'])			
+		client = OctokitClient.build
 
 		tutorial_data = Array.new
 		if tutorials_array.length > 0

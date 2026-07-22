@@ -12,6 +12,7 @@ gem 'jekyll-scholar'
 # octokit
 gem 'octokit'
 gem 'netrc'
+gem 'faraday-retry'
 
 # didn't compile
 gem 'rouge'
