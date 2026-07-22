@@ -46,6 +46,45 @@ require_relative 'octokit_client'
 
 module Tutorials
 
+	METADATA_FALLBACK_FILE = "tutorials_metadata.yml"
+
+	# Fields that may be centrally provided in tutorials_metadata.yml until a
+	# tutorial defines them in its own README.md frontmatter (see
+	# MIGRATION_PLAN.md, task 1).
+	FALLBACK_FIELDS = %w[beastversion_tutorial workflow status keywords packages domains beastversion_package]
+
+	def self.load_fallback_metadata(file = METADATA_FALLBACK_FILE)
+		return {} unless File.exist?(file)
+		YAML.load_file(file) || {}
+	end
+
+	def self.blank?(value)
+		value.nil? || (value.respond_to?(:empty?) && value.empty?)
+	end
+
+	# Field-by-field merge: a tutorial's own frontmatter always wins per
+	# field; only fields the tutorial does not define are filled in from the
+	# central fallback file. Warn when a tutorial already defines a field
+	# also present in the fallback file, since that fallback entry is now
+	# redundant and should be removed upstream.
+	def self.merge_fallback_metadata(repo, tutorial_header, fallback_metadata)
+		fallback = fallback_metadata[repo]
+		return tutorial_header unless fallback
+
+		merged = tutorial_header.dup
+		FALLBACK_FIELDS.each do |field|
+			own_present = !blank?(tutorial_header[field])
+			fallback_present = !blank?(fallback[field])
+
+			if own_present && fallback_present
+				puts "\t\tWARNING: #{repo} now defines '#{field}' itself — remove it from #{METADATA_FALLBACK_FILE}"
+			elsif !own_present && fallback_present
+				merged[field] = fallback[field]
+			end
+		end
+		merged
+	end
+
 	def self.find_files(prefix, wildcard)
 
 		ignore_list = ["README.md", "README.mdown", "readme.md"]
@@ -69,6 +108,8 @@ module Tutorials
 		# create octokit client
 		client = OctokitClient.build
 
+		fallback_metadata = load_fallback_metadata
+
 		tutorial_data = Array.new
 		if tutorials_array.length > 0
 			tutorials_array.each do |repo|
@@ -89,10 +130,13 @@ module Tutorials
 				# load tutorial header metadata from README.md
 				# overwrite description with tutorial header description if not empty
 				tutorial_header = YAML.load_file("tutorials/#{reponame}/README.md")
+				tutorial_header = merge_fallback_metadata(repo, tutorial_header, fallback_metadata)
+
 				tutorial_level  = tutorial_header["level"]
 				tutorial_title  = tutorial_header["title"]
 				tutorial_author = tutorial_header["author"]
-				tutorial_beast  = tutorial_header["beastversion"]
+				tutorial_beast  = tutorial_header["beastversion_tutorial"] || tutorial_header["beastversion"]
+				tutorial_beast_package = tutorial_header["beastversion_package"]
 				tutorial_workflow = tutorial_header["workflow"] || tutorial_header["tutorial_type"]
 				tutorial_packages = tutorial_header["packages"] || []
 				tutorial_keywords = tutorial_header["keywords"] || []
@@ -172,6 +216,7 @@ module Tutorials
 					"contributors" => tutorial_contributors,
 					"level" => tutorial_level,
 					"beastversion" => tutorial_beast,
+					"beastversion_package" => tutorial_beast_package,
 					"workflow" => tutorial_workflow,
 					"packages" => tutorial_packages,
 					"keywords" => tutorial_keywords,
