@@ -19,22 +19,6 @@
 #   beastversion_package    - most recent BEAST2 version supporting the packages
 #
 # ---------------------------------------------------------------------------
-# STATUS (2026-07-22):
-#   - `workflow`, `keywords`, `domains` — human-reviewed against each tutorial's
-#     README content (replacing the earlier `migrate_tutorial.py` heuristic guess).
-#     `domains` values are constrained to tutorial_schema.yml's list (virology,
-#     epidemiology, phylogeography, palaeontology, population genetics, language
-#     evolution, macroevolution); methods-only tutorials with no natural domain
-#     have `domains` omitted rather than forced. Some keywords are intentionally
-#     outside the recommended taxonomy (e.g. "recombination", "nested sampling")
-#     where they are the tutorial's actual subject — these trip a build warning
-#     but are more useful for search than a forced taxonomy term.
-#   - `packages` — still the raw heuristic seed, NOT yet reviewed (see MIGRATION_PLAN
-#     task 5). Some are wrong (e.g. detected StarBeast2 where the tutorial uses a
-#     different package). To be curated in a later pass.
-#   - `beastversion_tutorial` / `beastversion_package` — reliable (rename + CBAN lookup).
-#   See MIGRATION_PLAN.md for the borderline workflow/domain calls flagged for review.
-# ---------------------------------------------------------------------------
 
 taming-the-beast/Introduction-to-BEAST2:
   beastversion_tutorial: '2.7.x'
@@ -46,6 +30,8 @@ taming-the-beast/Introduction-to-BEAST2:
   - site models
   - nucleotide
   - Bayesian inference
+  packages:
+  - CCD
 taming-the-beast/Troubleshooting-convergence-issues:
   beastversion_tutorial: '2.7.x'
   workflow: Troubleshooting
@@ -55,9 +41,6 @@ taming-the-beast/Troubleshooting-convergence-issues:
   - MCMC
   - molecular clock
   - parameter estimation
-  packages:
-  - SA
-  beastversion_package: '2.7'
 taming-the-beast/Troubleshooting-initialization-issues:
   beastversion_tutorial: '2.7.x'
   workflow: Troubleshooting
@@ -68,8 +51,8 @@ taming-the-beast/Troubleshooting-initialization-issues:
   - relaxed clock
   - calibration
   packages:
-  - BDSKY
   - SA
+  - ORC
   beastversion_package: '2.7'
 nicfel/AIM-Tutorial:
   beastversion_tutorial: '2.5.2'
@@ -81,10 +64,11 @@ nicfel/AIM-Tutorial:
   - population structure
   - gene flow
   packages:
-  - StarBeast2
-  - StarBeast
+  - StarBEAST2
+  - CoupledMCMC
   domains:
   - population genetics
+  - macroevolution
 taming-the-beast/Bacter-Tutorial:
   beastversion_tutorial: '2.5.0'
   workflow: Advanced analysis
@@ -93,11 +77,13 @@ taming-the-beast/Bacter-Tutorial:
   - coalescent
   - recombination
   - nucleotide
+  packages:
+  - bacter
   domains:
   - population genetics
 nicfel/CoupledMCMC-Tutorial:
   beastversion_tutorial: '2.6.0'
-  workflow: Advanced analysis
+  workflow: Troubleshooting
   status: current
   keywords:
   - parallel tempering
@@ -106,7 +92,7 @@ nicfel/CoupledMCMC-Tutorial:
   - coalescent
   - molecular clock
   packages:
-  - StarBeast2
+  - CoupledMCMC
   domains:
   - epidemiology
 rachelwarnock/BDMM-Prime-for-macroevolution:
@@ -119,8 +105,9 @@ rachelwarnock/BDMM-Prime-for-macroevolution:
   - population structure
   - tip dating
   packages:
-  - BDSKY
-  - SA
+  - BDMM-Prime
+  - MM
+  - BEAST_CLASSIC
   domains:
   - macroevolution
   - palaeontology
@@ -135,8 +122,9 @@ genomescale/calibrated-species-trees:
   - molecular clock
   - relaxed clock
   packages:
-  - StarBeast2
+  - StarBEAST2
   domains:
+  - macroevolution
   - population genetics
 mmatschiner/CladeAge-Tutorial:
   beastversion_tutorial: '2.5.0'
@@ -148,6 +136,8 @@ mmatschiner/CladeAge-Tutorial:
   - molecular clock
   - relaxed clock
   - divergence time
+  packages:
+  - CA
   domains:
   - macroevolution
   - palaeontology
@@ -159,6 +149,8 @@ bjoelle/ClaDS-tutorial:
   - birth-death
   - diversification
   - relaxed clock
+  packages:
+  - ClaDS
   domains:
   - macroevolution
 taming-the-beast/FBD-tutorial:
@@ -174,6 +166,7 @@ taming-the-beast/FBD-tutorial:
   - morphological
   packages:
   - SA
+  - ORC
   domains:
   - palaeontology
   - macroevolution
@@ -185,7 +178,10 @@ nicfel/Reassortment-Tutorial:
   keywords:
   - coalescent
   - reassortment
+  - recombination
   - tip dating
+  packages:
+  - CoalRe
   domains:
   - virology
 KonstantinHoffmann/LanguagePhylogenies:
@@ -198,6 +194,7 @@ KonstantinHoffmann/LanguagePhylogenies:
   - calibration
   - cognate data
   packages:
+  - Babel
   - BDSKY
   - SA
   domains:
@@ -213,7 +210,8 @@ taming-the-BEAST/Mascot-Tutorial:
   - population structure
   - phylogeography
   packages:
-  - MASCOT
+  - Mascot
+  - CCD
   domains:
   - phylogeography
 taming-the-beast/Molecular-Dating-Tutorial:
@@ -226,6 +224,8 @@ taming-the-beast/Molecular-Dating-Tutorial:
   - tip dating
   - substitution models
   - model averaging
+  packages:
+  - bModelTest
   domains:
   - virology
   - epidemiology
@@ -247,6 +247,8 @@ sgtRoberty/NS-tutorial:
   - marginal likelihood
   - nested sampling
   - molecular clock
+  packages:
+  - NS
 taming-the-beast/Molecular-clock-dating-and-modelling-rate-variation:
   beastversion_tutorial: '2.7.7'
   workflow: Advanced analysis
@@ -257,6 +259,9 @@ taming-the-beast/Molecular-clock-dating-and-modelling-rate-variation:
   - substitution models
   - site models
   - calibration
+  packages:
+  - bModelTest
+  - CCD
 bjoelle/MSBD-tutorial:
   beastversion_tutorial: '2.7.x'
   workflow: Advanced analysis
@@ -264,6 +269,8 @@ bjoelle/MSBD-tutorial:
   keywords:
   - birth-death
   - diversification
+  packages:
+  - MSBD
   domains:
   - macroevolution
 boskovav/PIQMEE-Tutorial:
@@ -276,7 +283,7 @@ boskovav/PIQMEE-Tutorial:
   - tip dating
   - duplicate sequences
   packages:
-  - BDSKY
+  - PIQMEE
   domains:
   - epidemiology
   beastversion_package: '2.7'
@@ -320,7 +327,7 @@ bethany-j-allen/Skyline-analyses-for-macroevolution:
   - diversification
   packages:
   - BDSKY
-  - SA
+  - feast
   domains:
   - macroevolution
   - palaeontology
@@ -348,6 +355,8 @@ bjoelle/BFD_snapper_tutorial:
   - species delimitation
   - marginal likelihood
   - SNP data
+  packages:
+  - snapper
   domains:
   - population genetics
 genomescale/starbeast2-tutorial:
@@ -360,11 +369,13 @@ genomescale/starbeast2-tutorial:
   - molecular clock
   - relaxed clock
   packages:
-  - StarBeast2
+  - StarBEAST2
   domains:
+  - macroevolution
   - population genetics
 taming-the-beast/StarBeast3-Tutorial:
   beastversion_tutorial: '2.7.8'
+  beastversion_package: '2.7'
   workflow: Advanced analysis
   status: current
   keywords:
@@ -374,12 +385,11 @@ taming-the-beast/StarBeast3-Tutorial:
   - total evidence
   - relaxed clock
   packages:
-  - StarBeast3
-  - StarBeast2
-  - SA
+  - starbeast3
+  - CCD
   domains:
+  - macroevolution
   - population genetics
-  beastversion_package: '2.7'
 taming-the-beast/Structured-coalescent:
   beastversion_tutorial: '2.7.x'
   workflow: Advanced analysis
@@ -403,7 +413,7 @@ taming-the-beast/Structured-birth-death-model:
   - population structure
   - migration
   packages:
-  - MultiTypeTree
+  - bdmm
   domains:
   - phylogeography
   - epidemiology
@@ -417,6 +427,8 @@ taming-the-beast/Substitution-model-averaging:
   - site models
   - model averaging
   - model selection
+  packages:
+  - bModelTest
 laduplessis/TiDeTree-Tutorial:
   beastversion_tutorial: '>= 2.7'
   workflow: Advanced analysis
@@ -427,10 +439,11 @@ laduplessis/TiDeTree-Tutorial:
   - tip dating
   - lineage tracing
   - single-cell
-  domains:
-  - single-cell
   packages:
   - TiDeTree
+  - CCD
+  domains:
+  - single-cell
 walterxie/MEP-tutorial:
   beastversion_tutorial: '2.7.8'
   workflow: Basic workflow
@@ -440,6 +453,8 @@ walterxie/MEP-tutorial:
   - tip dating
   - coalescent
   - substitution models
+  packages:
+  - CCD
   domains:
   - virology
 bethany-j-allen/Total-Evidence-Tutorial:
@@ -452,6 +467,7 @@ bethany-j-allen/Total-Evidence-Tutorial:
   - tip dating
   - calibration
   packages:
+  - MM
   - SA
   domains:
   - macroevolution
@@ -466,8 +482,6 @@ taming-the-beast/Visualizing-BEAST2-results:
   - R
   - tree visualization
   - phylodynamics
-  packages:
-  - BDSKY
 tgvaughan/Structured-birth-death-BDMM-Prime:
   beastversion_tutorial: '2.7.7'
   workflow: Advanced analysis
@@ -478,8 +492,7 @@ tgvaughan/Structured-birth-death-BDMM-Prime:
   - migration
   - phylogeography
   packages:
-  - BDSKY
-  - MultiTypeTree
+  - BDMM-Prime
   domains:
   - phylogeography
   - virology
