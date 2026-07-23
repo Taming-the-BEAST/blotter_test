@@ -133,7 +133,7 @@ categories:
         <!-- Status and version badges -->
         <div class="mb-2">
           {% if tut.status == 'deprecated' %}
-          <span class="badge bg-secondary me-1">Deprecated</span>
+          <span class="badge badge-deprecated me-1">Deprecated</span>
           {% endif %}
 
           {% if tut.beastversion_tutorial %}
@@ -167,18 +167,18 @@ categories:
         <!-- Tags: workflow, packages, domains -->
         <div class="d-flex flex-wrap gap-1 mt-2">
           {% if tut.workflow %}
-          <span class="badge rounded-pill bg-purple">{{ tut.workflow }}</span>
+          <span class="badge rounded-pill badge-workflow">{{ tut.workflow }}</span>
           {% endif %}
 
           {% if tut.packages %}
           {% for package in tut.packages %}
-          <span class="badge rounded-pill bg-primary">{{ package }}</span>
+          <span class="badge rounded-pill badge-package">{{ package }}</span>
           {% endfor %}
           {% endif %}
 
           {% if tut.domains %}
           {% for domain in tut.domains %}
-          <span class="badge rounded-pill bg-teal">{{ domain }}</span>
+          <span class="badge rounded-pill badge-domain">{{ domain }}</span>
           {% endfor %}
           {% endif %}
         </div>

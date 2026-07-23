@@ -32,26 +32,22 @@ categories:
 		</div>
 		<p>
 		<!-- Tutorial metadata badges -->
+		<!-- Read from `tutorial.*` (enriched _data/tutorials.yml, incl. the
+		     tutorials_metadata.yml fallback) rather than `page.*` (raw README
+		     frontmatter), so badges show even before a tutorial migrates its
+		     own frontmatter upstream. -->
 		<div class="tutorial-badges" style="margin-bottom: 15px;">
-			{% if page.level %}
-			<span class="badge badge-level badge-{{ page.level | downcase }}" style="padding: 5px 10px; margin-right: 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-				{{ page.level }}
-			</span>
+			{% if tutorial.status == 'deprecated' %}
+			<span class="tag badge-deprecated">Deprecated</span>
 			{% endif %}
-			{% if page.status == 'deprecated' %}
-			<span class="badge badge-deprecated" style="background: #999; color: #fff; padding: 5px 10px; margin-right: 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-				Deprecated
-			</span>
+			{% if tutorial.workflow %}
+			<span class="tag badge-workflow">{{ tutorial.workflow }}</span>
 			{% endif %}
-			{% if page.workflow %}
-			<span class="tag tag-type" style="background: #6f42c1; color: white; padding: 4px 8px; margin-right: 6px; border-radius: 4px; font-size: 11px;">
-				{{ page.workflow }}
-			</span>
-			{% endif %}
-			{% for package in page.packages %}
-			<span class="tag tag-package" style="background: #007bff; color: white; padding: 4px 8px; margin-right: 6px; border-radius: 4px; font-size: 11px;">
-				{{ package }}
-			</span>
+			{% for package in tutorial.packages %}
+			<span class="tag badge-package">{{ package }}</span>
+			{% endfor %}
+			{% for domain in tutorial.domains %}
+			<span class="tag badge-domain">{{ domain }}</span>
 			{% endfor %}
 		</div>
 
@@ -109,22 +105,6 @@ categories:
 		{% endif %}
 	</div>
 </div>
-
-<!-- Add CSS for badges -->
-<style>
-	.badge-beginner {
-		background: #28a745;
-		color: white;
-	}
-	.badge-intermediate {
-		background: #ffc107;
-		color: #333;
-	}
-	.badge-professional {
-		background: #dc3545;
-		color: white;
-	}
-</style>
 
 <div class="bigspacer"></div>
 
