@@ -142,3 +142,9 @@ tutorials:
 plugins:
   - jekyll-katex
   - jekyll-scholar
+
+# Silence deprecation warnings from vendored bootstrap (loaded via load_paths).
+sass:
+  load_paths:
+    - bootstrap/scss
+  quiet_deps: true

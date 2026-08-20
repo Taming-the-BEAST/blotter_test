@@ -27,8 +27,40 @@ h4, .h4 { font-size: math.ceil($font-size-base * 1.25); }  /* ~18px */
 h5, .h5 { font-size:  $font-size-base; }
 h6, .h6 { font-size: math.ceil($font-size-base * 0.85); }  /* ~12px */
 
-@import "../bootstrap/scss/bootstrap";
+@import "bootstrap";
 
+
+/* Tutorial filter panel: label in a fixed left column, controls wrap beside it */
+.tutorial-index {
+    .filter-row {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        flex: 0 0 6.5rem;
+        margin-bottom: 0;
+        text-align: right;
+    }
+
+    .filter-controls {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* Stack labels above controls on narrow screens */
+    @media (max-width: 575.98px) {
+        .filter-row {
+            display: block;
+        }
+
+        .filter-label {
+            text-align: left;
+            margin-bottom: 0.25rem;
+        }
+    }
+}
 
 /* Container and layout spacing */
 .container {

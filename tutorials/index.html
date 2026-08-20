@@ -14,17 +14,18 @@ categories:
   <div class="bg-light p-3 rounded mb-3">
 
     <!-- Search -->
-    <div class="mb-2">
-      <label for="tutorial-search" class="form-label fw-semibold mb-1">Search:</label>
-      <div class="d-flex gap-2 mb-1">
-        <div class="btn-group btn-group-sm" role="group" aria-label="Search mode">
-          <input type="radio" class="btn-check" name="search-mode" id="search-mode-keyword" value="keyword" checked>
-          <label class="btn btn-outline-secondary" for="search-mode-keyword">Keyword</label>
-          <input type="radio" class="btn-check" name="search-mode" id="search-mode-fulltext" value="fulltext">
-          <label class="btn btn-outline-secondary" for="search-mode-fulltext">Full-Text</label>
+    <div class="filter-row mb-2">
+      <label for="tutorial-search" class="form-label fw-semibold filter-label">Search:</label>
+      <div class="filter-controls">
+        <div class="d-flex gap-2 mb-1">
+          <div class="btn-group btn-group-sm" role="group" aria-label="Search mode">
+            <input type="radio" class="btn-check" name="search-mode" id="search-mode-keyword" value="keyword" checked>
+            <label class="btn btn-outline-secondary" for="search-mode-keyword">Keyword</label>
+            <input type="radio" class="btn-check" name="search-mode" id="search-mode-fulltext" value="fulltext">
+            <label class="btn btn-outline-secondary" for="search-mode-fulltext">Full-Text</label>
+          </div>
         </div>
-      </div>
-      <div id="keyword-search-container">
+        <div id="keyword-search-container">
         <input type="text" id="tutorial-search" class="form-control form-control-sm" placeholder="Search by title, author, keywords, packages..." list="keyword-suggestions" autocomplete="off">
         <datalist id="keyword-suggestions">
           {% comment %} Collect all searchable terms {% endcomment %}
@@ -42,8 +43,8 @@ categories:
         <div class="mt-1">
           <span id="keyword-chips" class="d-inline-flex flex-wrap gap-1">
             {% comment %} Fixed static chips + top dynamic keywords from _data/popular_keywords.yml (skipping statics). {% endcomment %}
-            {% assign static_keywords = "getting started,coalescent,birth-death,molecular clock,phylogeography" | split: "," %}
-            {% assign max_dynamic_keywords = 5 %}
+            {% assign static_keywords = "coalescent,birth-death,molecular clock,phylogeography" | split: "," %}
+            {% assign max_dynamic_keywords = 4 %}
             {% for kw in static_keywords %}
             <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw }}">{{ kw }}</button>
             {% endfor %}
@@ -55,28 +56,30 @@ categories:
                 {% assign shown = shown | plus: 1 %}
               {% endunless %}
             {% endfor %}
+            <button type="button" class="btn btn-sm rounded-pill border-0 text-secondary d-none" id="keyword-clear">Clear</button>
           </span>
         </div>
       </div>
-      <div id="fulltext-search-container" style="display: none;">
-        <input type="text" id="fulltext-search" class="form-control form-control-sm" placeholder="Search tutorial content..." autocomplete="off">
-        <div id="fulltext-status" class="text-muted small mt-1" aria-live="polite"></div>
+        <div id="fulltext-search-container" style="display: none;">
+          <input type="text" id="fulltext-search" class="form-control form-control-sm" placeholder="Search tutorial content..." autocomplete="off">
+          <div id="fulltext-status" class="text-muted small mt-1" aria-live="polite"></div>
+        </div>
       </div>
     </div>
 
     <!-- Sort options -->
-    <div class="mb-2">
-      <label class="form-label fw-semibold mb-1">Sort by:</label>
-      <div class="d-flex flex-wrap gap-1">
+    <div class="filter-row mb-2">
+      <label class="form-label fw-semibold filter-label">Sort by:</label>
+      <div class="filter-controls d-flex flex-wrap gap-1">
         <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-sort="date">Recently updated</button>
         <button class="btn btn-sm btn-outline-secondary rounded-pill" data-sort="title">Title (A-Z)</button>
       </div>
     </div>
 
     <!-- Workflow filter -->
-    <div class="mb-2">
-      <label class="form-label fw-semibold mb-1">Workflow:</label>
-      <div class="d-flex flex-wrap gap-1">
+    <div class="filter-row mb-2">
+      <label class="form-label fw-semibold filter-label">Workflow:</label>
+      <div class="filter-controls d-flex flex-wrap gap-1">
         <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="workflow" data-value="all">All</button>
         <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Getting started">Getting started</button>
         <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Basic workflow">Basic workflow</button>
@@ -90,9 +93,9 @@ categories:
     {% assign ranked_packages = site.data.popular_packages %}
     {% if ranked_packages.size > 0 %}
     {% assign max_packages = 5 %}
-    <div class="mb-2">
-      <label class="form-label fw-semibold mb-1">Package:</label>
-      <div class="d-flex flex-wrap gap-1">
+    <div class="filter-row mb-2">
+      <label class="form-label fw-semibold filter-label">Package:</label>
+      <div class="filter-controls d-flex flex-wrap gap-1">
         <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="package" data-value="all">All</button>
         {% for pkg in ranked_packages %}
         <button class="btn btn-sm btn-outline-secondary rounded-pill{% if forloop.index0 >= max_packages %} package-extra d-none{% endif %}" data-filter="package" data-value="{{ pkg }}">{{ pkg }}</button>
@@ -106,9 +109,9 @@ categories:
 
     <!-- Domain filter (dynamic) -->
     {% if all_domains.size > 0 %}
-    <div class="mb-2">
-      <label class="form-label fw-semibold mb-1">Application Domain:</label>
-      <div class="d-flex flex-wrap gap-1">
+    <div class="filter-row mb-2">
+      <label class="form-label fw-semibold filter-label">Domain:</label>
+      <div class="filter-controls d-flex flex-wrap gap-1">
         <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="domain" data-value="all">All</button>
         {% for domain in all_domains %}
         <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain }}">{{ domain | capitalize }}</button>
