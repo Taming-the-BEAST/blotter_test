@@ -56,8 +56,8 @@ mdarray.each { |md|
 		header   = YAML.load(contents[0..pos[0]])
 		contents = contents[pos[0]..-1]
 
-		# VALIDATE METADATA
-		if (tutorial_name != nil)
+		# VALIDATE METADATA (only the tutorial's main README, not LICENSE.md etc.)
+		if (tutorial_name != nil && is_main_readme)
 			validation_result = VALIDATOR.validate(header)
 			unless validation_result[:valid]
 			puts "  WARNING: #{tutorial_name} has validation errors:"
