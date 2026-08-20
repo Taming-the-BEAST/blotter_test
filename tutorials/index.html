@@ -152,10 +152,16 @@ categories:
           <span class="badge badge-deprecated me-1">Deprecated</span>
           {% endif %}
 
-          {% if tut.beastversion_tutorial %}
-          <span class="badge bg-secondary me-1">BEAST {{ tut.beastversion_tutorial }}</span>
-          {% elsif tut.beastversion %}
-          <span class="badge bg-secondary me-1">BEAST {{ tut.beastversion }}</span>
+          {% comment %}
+          Show only major.minor: patch levels are inconsistent across tutorials
+          ('2.7.7', '2.7', '2.7.x') and rarely matter. All three render as '2.7'.
+          Range prefixes ('>= 2.7') are dropped too - they claim compatibility the
+          author cannot have tested.
+          {% endcomment %}
+          {% assign beast_raw = tut.beastversion_tutorial | default: tut.beastversion | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
+          {% assign beast_display = beast_raw | split: "." | slice: 0, 2 | join: "." %}
+          {% if beast_display != "" %}
+          <span class="badge bg-secondary me-1">BEAST {{ beast_display }}</span>
           {% endif %}
         </div>
 
