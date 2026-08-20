@@ -42,6 +42,7 @@
   
 require 'octokit'
 require 'yaml'
+require 'date'
 require_relative 'octokit_client'
 
 module Tutorials
@@ -55,7 +56,7 @@ module Tutorials
 
 	def self.load_fallback_metadata(file = METADATA_FALLBACK_FILE)
 		return {} unless File.exist?(file)
-		YAML.load_file(file) || {}
+		YAML.load_file(file, permitted_classes: [Date, Time], aliases: true) || {}
 	end
 
 	def self.blank?(value)
@@ -129,7 +130,13 @@ module Tutorials
 
 				# load tutorial header metadata from README.md
 				# overwrite description with tutorial header description if not empty
-				tutorial_header = YAML.load_file("tutorials/#{reponame}/README.md")
+				tutorial_header = YAML.load_file("tutorials/#{reponame}/README.md",
+					permitted_classes: [Date, Time], aliases: true)
+				# A README without parseable frontmatter yields nil/String, not a Hash.
+				unless tutorial_header.is_a?(Hash)
+					puts "\t\tWARNING: #{repo} README.md has no usable frontmatter - skipping"
+					next
+				end
 				tutorial_header = merge_fallback_metadata(repo, tutorial_header, fallback_metadata)
 
 				tutorial_level  = tutorial_header["level"]

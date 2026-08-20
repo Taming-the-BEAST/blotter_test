@@ -47,6 +47,9 @@ config["tutorials"].each do |repo|
 end
 
 Dir.chdir($basedir)
-`ruby _scripts/preprocess-tutorial-markdown.rb`
-`ruby _scripts/generate-tutorial-licenses.rb`
-`ruby _scripts/generate-tutorial-data.rb`
+# `system(..., exception: true)` rather than backticks: backticks swallow both the
+# output and the exit status, so a crash here used to leave _data/tutorials.yml
+# missing while the build still reported success.
+system("ruby", "_scripts/preprocess-tutorial-markdown.rb", exception: true)
+system("ruby", "_scripts/generate-tutorial-licenses.rb", exception: true)
+system("ruby", "_scripts/generate-tutorial-data.rb", exception: true)

@@ -3,6 +3,7 @@
 # This script validates tutorial YAML frontmatter against the schema
 
 require 'yaml'
+require 'date'
 require 'set'
 
 class TutorialMetadataValidator
@@ -180,7 +181,7 @@ if __FILE__ == $0
   content = File.read(tutorial_file)
   
   if content =~ /\A---\s*\n(.*?)\n---\s*\n/m
-    frontmatter = YAML.load($1)
+    frontmatter = YAML.load($1, permitted_classes: [Date, Time], aliases: true)
     
     validator = TutorialMetadataValidator.new(schema_file)
     result = validator.validate(frontmatter)

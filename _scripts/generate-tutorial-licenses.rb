@@ -1,4 +1,5 @@
 require 'yaml'
+require 'date'
 
 # collect all license files 
 licensearray = Dir.glob("tutorials/**/LICENSE*")
@@ -43,7 +44,7 @@ licensearray.each { |license|
 	else
 		pos = contents.enum_for(:scan, /\A---(.|\n)*?---/).map { Regexp.last_match.end(0) }
 
-		header   = YAML.load(contents[0..pos[0]])
+		header   = YAML.load(contents[0..pos[0]], permitted_classes: [Date, Time], aliases: true)
 		contents = contents[pos[0]..-1]
 
 		if (tutorial_name != nil)

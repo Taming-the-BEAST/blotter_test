@@ -1,4 +1,5 @@
 require 'yaml'
+require 'date'
 require_relative 'validate_tutorial_metadata'
 
 # Load validator
@@ -53,7 +54,7 @@ mdarray.each { |md|
 	else
 		pos = contents.enum_for(:scan, /\A---(.|\n)*?---/).map { Regexp.last_match.end(0) }
 
-		header   = YAML.load(contents[0..pos[0]])
+		header   = YAML.load(contents[0..pos[0]], permitted_classes: [Date, Time], aliases: true)
 		contents = contents[pos[0]..-1]
 
 		# VALIDATE METADATA (only the tutorial's main README, not LICENSE.md etc.)
