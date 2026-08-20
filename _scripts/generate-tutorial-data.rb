@@ -246,13 +246,32 @@ module Tutorials
 	end
 	
 	def self.write_data(tutorial_data, data_file)
-	
-		puts "Writing tutorial data"			
+
+		puts "Writing tutorial data"
 		File.write(data_file, tutorial_data.to_yaml)
-	
+
+	end
+
+	# Values of a field across all tutorials, ranked by tutorial count (desc), ties alphabetical.
+	def self.rank_by_count(tutorial_data, field)
+		tutorial_data
+			.flat_map { |t| t[field] || [] }
+			.reject { |v| v.nil? || v.to_s.strip.empty? }
+			.tally
+			.sort_by { |val, count| [-count, val] }
+			.map(&:first)
+	end
+
+	def self.write_ranked(tutorial_data, field, data_file, limit = nil)
+		ranked = rank_by_count(tutorial_data, field)
+		ranked = ranked.first(limit) if limit
+		puts "Writing #{ranked.size} ranked #{field}"
+		File.write(data_file, ranked.to_yaml)
 	end
 
 end
 
 tutorial_data = Tutorials.generate_data("_config.yml")
 Tutorials.write_data(tutorial_data, "_data/tutorials.yml")
+Tutorials.write_ranked(tutorial_data, "keywords", "_data/popular_keywords.yml", 20)
+Tutorials.write_ranked(tutorial_data, "packages", "_data/popular_packages.yml")

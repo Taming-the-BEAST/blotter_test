@@ -25,6 +25,7 @@
     setupSearch();
     setupSearchModeToggle();
     setupKeywordChips();
+    setupPackageShowAll();
     setupLegacyToggle();
     initPagefind();
     applyFilters();
@@ -280,6 +281,20 @@
           applyFilters();
         }
       });
+    });
+  }
+
+  // Toggle the hidden overflow package buttons.
+  function setupPackageShowAll() {
+    const btn = document.getElementById('package-show-all');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      const expanded = this.dataset.expanded === 'true';
+      document.querySelectorAll('.package-extra').forEach(el => el.classList.toggle('d-none', expanded));
+      this.dataset.expanded = expanded ? 'false' : 'true';
+      this.textContent = expanded
+        ? `Show all (${document.querySelectorAll('[data-filter="package"]:not([data-value="all"])').length})`
+        : 'Show fewer';
     });
   }
 

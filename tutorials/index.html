@@ -41,9 +41,19 @@ categories:
         </datalist>
         <div class="mt-1">
           <span id="keyword-chips" class="d-inline-flex flex-wrap gap-1">
-            {% assign popular_keywords = "getting started,coalescent,birth-death,molecular clock,phylogeography" | split: "," %}
-            {% for kw in popular_keywords %}
+            {% comment %} Fixed static chips + top dynamic keywords from _data/popular_keywords.yml (skipping statics). {% endcomment %}
+            {% assign static_keywords = "getting started,coalescent,birth-death,molecular clock,phylogeography" | split: "," %}
+            {% assign max_dynamic_keywords = 5 %}
+            {% for kw in static_keywords %}
             <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw }}">{{ kw }}</button>
+            {% endfor %}
+            {% assign shown = 0 %}
+            {% for kw in site.data.popular_keywords %}
+              {% if shown >= max_dynamic_keywords %}{% break %}{% endif %}
+              {% unless static_keywords contains kw %}
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw }}">{{ kw }}</button>
+                {% assign shown = shown | plus: 1 %}
+              {% endunless %}
             {% endfor %}
           </span>
         </div>
@@ -76,15 +86,20 @@ categories:
       </div>
     </div>
 
-    <!-- Package filter (dynamic) -->
-    {% if all_packages.size > 0 %}
+    <!-- Package filter (ranked by tutorial count; top N shown, rest behind "Show all") -->
+    {% assign ranked_packages = site.data.popular_packages %}
+    {% if ranked_packages.size > 0 %}
+    {% assign max_packages = 5 %}
     <div class="mb-2">
       <label class="form-label fw-semibold mb-1">Package:</label>
       <div class="d-flex flex-wrap gap-1">
         <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="package" data-value="all">All</button>
-        {% for pkg in all_packages %}
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="package" data-value="{{ pkg }}">{{ pkg }}</button>
+        {% for pkg in ranked_packages %}
+        <button class="btn btn-sm btn-outline-secondary rounded-pill{% if forloop.index0 >= max_packages %} package-extra d-none{% endif %}" data-filter="package" data-value="{{ pkg }}">{{ pkg }}</button>
         {% endfor %}
+        {% if ranked_packages.size > max_packages %}
+        <button type="button" class="btn btn-sm rounded-pill border-0 text-secondary" id="package-show-all" data-expanded="false">Show all ({{ ranked_packages.size }})</button>
+        {% endif %}
       </div>
     </div>
     {% endif %}
