@@ -89,6 +89,19 @@ categories:
       </div>
     </div>
 
+    <!-- Domain filter (dynamic) -->
+    {% if all_domains.size > 0 %}
+    <div class="filter-row mb-2">
+      <label class="form-label fw-semibold filter-label">Domain:</label>
+      <div class="filter-controls d-flex flex-wrap gap-1">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="domain" data-value="all">All</button>
+        {% for domain in all_domains %}
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain }}">{{ domain | capitalize }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Package filter (ranked by tutorial count; top N shown, rest behind "Show all") -->
     {% assign ranked_packages = site.data.popular_packages %}
     {% if ranked_packages.size > 0 %}
@@ -103,19 +116,6 @@ categories:
         {% if ranked_packages.size > max_packages %}
         <button type="button" class="btn btn-sm rounded-pill border-0 text-secondary" id="package-show-all" data-expanded="false">Show all ({{ ranked_packages.size }})</button>
         {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- Domain filter (dynamic) -->
-    {% if all_domains.size > 0 %}
-    <div class="filter-row mb-2">
-      <label class="form-label fw-semibold filter-label">Domain:</label>
-      <div class="filter-controls d-flex flex-wrap gap-1">
-        <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="domain" data-value="all">All</button>
-        {% for domain in all_domains %}
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain }}">{{ domain | capitalize }}</button>
-        {% endfor %}
       </div>
     </div>
     {% endif %}
