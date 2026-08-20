@@ -11,7 +11,7 @@ mdarray.each { |md|
 	# if readme.md, rename to index.md
 	# if index.html already exists, remove
 	if File.basename(md) =~ /readme/i
-		if File.exists?(File.dirname(md) + "/index.html")
+		if File.exist?(File.dirname(md) + "/index.html")
 			File.delete(File.dirname(md) + "/index.html")
 		end
 		indexmd = File.dirname(md) + "/index.md"

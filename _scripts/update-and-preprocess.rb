@@ -23,7 +23,7 @@ config["tutorials"].each do |repo|
         puts "=== Processing tutorial #{name} ==="
 
 	Dir.chdir($basedir + "/tutorials")			
-	if !Dir.exists?(name)								# clone tutorial repo
+	if !Dir.exist?(name)								# clone tutorial repo
 		`git clone --depth 1 https://github.com/#{repo}.git`
 	end
 	Dir.chdir($basedir + "/tutorials/" + name)			# drop into blotter dir	
@@ -36,7 +36,7 @@ config["tutorials"].each do |repo|
 		`cp ../../_layouts/CCby4.0.txt LICENSE`
 	end
 
-	if File.exists?("main.tex")							# build tutorial pdf if main.tex exists
+	if File.exist?("main.tex")							# build tutorial pdf if main.tex exists
 		File.rename("main.tex", "#{name}.tex")
 		`pdflatex --interaction nonstopmode #{name}.tex`									
 		`bibtex #{name}`

@@ -18,6 +18,10 @@ gem 'faraday-retry'
 gem 'rouge'
 gem 'listen'
 
-gem 'unicode'
-
 gem 'jekyll-katex'
+
+# stdlib gems no longer bundled by default in Ruby >= 3.5 (needed by jekyll)
+gem 'csv'
+gem 'base64'
+gem 'ostruct'
+gem 'observer'

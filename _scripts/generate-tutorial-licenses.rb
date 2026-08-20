@@ -9,7 +9,7 @@ licensearray.each { |license|
 	# if LICENSE, rename to LICENSE.md
 	# if LICENSE.html already exists, remove
 	if File.basename(license) =~ /LICENSE/i
-		if File.exists?(File.dirname(license) + "/LICENSE.html")
+		if File.exist?(File.dirname(license) + "/LICENSE.html")
 			File.delete(File.dirname(license) + "/LICENSE.html")
 		end
 		licensemd = File.dirname(license) + "/LICENSE.md"
