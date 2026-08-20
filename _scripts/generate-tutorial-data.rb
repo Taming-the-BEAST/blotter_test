@@ -16,8 +16,7 @@
 #   - login: laduplessis
 #     avatar: https://avatars0.githubusercontent.com/u/8872277?v=3&s=50
 #     url: https://github.com/laduplessis
-#   level: Beginner
-#   beastversion: 
+#   beastversion_tutorial:
 #   commits:
 #   - date: 2017-01-18 15:02:03.000000000 Z
 #     message: Add license
@@ -222,7 +221,7 @@ module Tutorials
 					"author" => tutorial_author,
 					"contributors" => tutorial_contributors,
 					"level" => tutorial_level,
-					"beastversion" => tutorial_beast,
+					"beastversion_tutorial" => tutorial_beast,
 					"beastversion_package" => tutorial_beast_package,
 					"workflow" => tutorial_workflow,
 					"packages" => tutorial_packages,
