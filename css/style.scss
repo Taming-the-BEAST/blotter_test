@@ -44,6 +44,11 @@ h6, .h6 { font-size: math.ceil($font-size-base * 0.85); }  /* ~12px */
         text-align: right;
     }
 
+    /* Lets the search input shrink inside its flex row instead of forcing overflow. */
+    .min-w-0 {
+        min-width: 0;
+    }
+
     .filter-controls {
         flex: 1 1 auto;
         min-width: 0;
