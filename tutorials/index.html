@@ -202,7 +202,7 @@ categories:
 
           {% if tut.domains %}
           {% for domain in tut.domains %}
-          <span class="badge rounded-pill badge-domain">{{ domain }}</span>
+          <span class="badge rounded-pill badge-domain">{{ domain | capitalize }}</span>
           {% endfor %}
           {% endif %}
         </div>

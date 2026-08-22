@@ -47,7 +47,7 @@ categories:
 			<span class="tag badge-package">{{ package }}</span>
 			{% endfor %}
 			{% for domain in tutorial.domains %}
-			<span class="tag badge-domain">{{ domain }}</span>
+			<span class="tag badge-domain">{{ domain | capitalize }}</span>
 			{% endfor %}
 		</div>
 
