@@ -161,17 +161,35 @@
     const keywordChipsRow = document.getElementById('keyword-chips-row');
     const fulltextInput = document.getElementById('fulltext-search');
     const fulltextStatus = document.getElementById('fulltext-status');
+    const fulltextClear = document.getElementById('fulltext-clear');
+
+    // Show the clear button only when there is something to clear.
+    function syncFulltextClear() {
+      if (fulltextClear) {
+        fulltextClear.classList.toggle('d-none', !fulltextInput || fulltextInput.value === '');
+      }
+    }
 
     // Setup fulltext search input
     if (fulltextInput) {
       fulltextInput.addEventListener('input', function() {
         const query = this.value.trim();
+        syncFulltextClear();
 
         // Debounce search
         clearTimeout(searchDebounceTimer);
         searchDebounceTimer = setTimeout(() => {
           performFulltextSearch(query);
         }, 300);
+      });
+    }
+
+    if (fulltextClear) {
+      fulltextClear.addEventListener('click', () => {
+        fulltextInput.value = '';
+        syncFulltextClear();
+        clearTimeout(searchDebounceTimer);
+        performFulltextSearch('');
       });
     }
 
@@ -187,6 +205,7 @@
           filters.fulltextResults = null;
           if (keywordChipsRow) keywordChipsRow.style.display = '';
           if (fulltextInput) fulltextInput.value = '';
+          syncFulltextClear();
           if (fulltextStatus) {
             fulltextStatus.textContent = '';
             fulltextStatus.style.display = 'none';
