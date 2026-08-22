@@ -71,6 +71,11 @@
   border-color: #6b8a9a;
 }
 
+/* Filter buttons that would leave no results */
+[data-filter].filter-dead {
+  opacity: 0.4;
+}
+
 /* Search mode toggle */
 .btn-check:checked + .btn-outline-secondary {
   background-color: #6b8a9a;
