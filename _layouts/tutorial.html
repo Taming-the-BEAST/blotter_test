@@ -43,11 +43,11 @@ categories:
 			{% if tutorial.workflow %}
 			<span class="tag badge-workflow">{{ tutorial.workflow }}</span>
 			{% endif %}
-			{% for package in tutorial.packages %}
-			<span class="tag badge-package">{{ package }}</span>
-			{% endfor %}
 			{% for domain in tutorial.domains %}
 			<span class="tag badge-domain">{{ domain | capitalize }}</span>
+			{% endfor %}
+			{% for package in tutorial.packages %}
+			<span class="tag badge-package">{{ package }}</span>
 			{% endfor %}
 		</div>
 

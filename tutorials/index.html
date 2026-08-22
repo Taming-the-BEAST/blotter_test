@@ -188,21 +188,21 @@ categories:
         </p>
         {% endif %}
 
-        <!-- Tags: workflow, packages, domains -->
+        <!-- Tags: workflow, domains, packages -->
         <div class="d-flex flex-wrap gap-1 mt-2">
           {% if tut.workflow %}
           <span class="badge rounded-pill badge-workflow">{{ tut.workflow }}</span>
           {% endif %}
 
-          {% if tut.packages %}
-          {% for package in tut.packages %}
-          <span class="badge rounded-pill badge-package">{{ package }}</span>
-          {% endfor %}
-          {% endif %}
-
           {% if tut.domains %}
           {% for domain in tut.domains %}
           <span class="badge rounded-pill badge-domain">{{ domain | capitalize }}</span>
+          {% endfor %}
+          {% endif %}
+
+          {% if tut.packages %}
+          {% for package in tut.packages %}
+          <span class="badge rounded-pill badge-package">{{ package }}</span>
           {% endfor %}
           {% endif %}
         </div>
