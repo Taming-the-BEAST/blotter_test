@@ -32,13 +32,13 @@ https://github.com/taming-the-beast/taming-the-beast.github.io/blob/master/tutor
 - removes the unused `level` field
 - adds `workflow`, `status`, `keywords`, `packages`, `domains`
 
-The values come from the central `tutorials_metadata.yml` on the Taming the BEAST
-website, where they are currently maintained as a fallback. Moving them here makes
+The values come from the central `tutorials_metadata.yml` in the Taming the BEAST
+repository, where they are currently maintained as a fallback. Moving them here makes
 this repo the source of truth again and lets the tutorial appear correctly in the
 filters on https://taming-the-beast.org/tutorials/.
 
-Please correct anything that looks wrong -- the metadata was reviewed centrally,
-not by the tutorial authors.
+Please correct anything that looks wrong. The metadata added here was reviewed
+centrally, not by the tutorial authors.
 """
 
 
