@@ -126,6 +126,7 @@ tutorials:
   - taming-the-beast/StarBeast3-Tutorial
   - taming-the-beast/Structured-coalescent
   - taming-the-beast/Structured-birth-death-model
+  - taming-the-beast/Structured-birth-death-BDMM-Prime
   - taming-the-beast/Substitution-model-averaging
   #- seidels/TiDeTree-Tutorial
   - laduplessis/TiDeTree-Tutorial
