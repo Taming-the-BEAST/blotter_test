@@ -76,6 +76,7 @@ categories:
       <div class="filter-controls d-flex flex-wrap gap-1">
         <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-sort="date">Recently updated</button>
         <button class="btn btn-sm btn-outline-secondary rounded-pill" data-sort="title">Title (A-Z)</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-sort="beastversion">BEAST version</button>
       </div>
     </div>
 
@@ -138,6 +139,14 @@ categories:
   <div class="tutorial-grid" id="tutorial-grid">
     {% if site.data.tutorials %}
     {% for tut in site.data.tutorials %}
+    {% comment %}
+    Show only major.minor: patch levels are inconsistent across tutorials
+    ('2.7.7', '2.7', '2.7.x') and rarely matter. All three render as '2.7'.
+    Range prefixes ('>= 2.7') are dropped too - they claim compatibility the
+    author cannot have tested.
+    {% endcomment %}
+    {% assign beast_raw = tut.beastversion_tutorial | default: tut.beastversion | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
+    {% assign beast_display = beast_raw | split: "." | slice: 0, 2 | join: "." %}
     <div class="card tutorial-card {% if tut.status == 'deprecated' %}tutorial-card--legacy{% endif %}"
          data-workflow="{{ tut.workflow }}"
          data-packages="{{ tut.packages | join: ',' }}"
@@ -146,6 +155,7 @@ categories:
          data-status="{{ tut.status }}"
          data-title="{{ tut.title }}"
          data-date="{{ tut.commits.first.date | date: '%Y%m%d' }}"
+         data-beastversion="{{ beast_display }}"
          data-search="{{ tut.title | downcase }} {{ tut.description | downcase }} {{ tut.author | downcase }} {{ tut.packages | join: ' ' | downcase }} {{ tut.keywords | join: ' ' | downcase }}">
 
       <div class="card-body">
@@ -155,14 +165,6 @@ categories:
           <span class="badge badge-deprecated me-1">Deprecated</span>
           {% endif %}
 
-          {% comment %}
-          Show only major.minor: patch levels are inconsistent across tutorials
-          ('2.7.7', '2.7', '2.7.x') and rarely matter. All three render as '2.7'.
-          Range prefixes ('>= 2.7') are dropped too - they claim compatibility the
-          author cannot have tested.
-          {% endcomment %}
-          {% assign beast_raw = tut.beastversion_tutorial | default: tut.beastversion | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
-          {% assign beast_display = beast_raw | split: "." | slice: 0, 2 | join: "." %}
           {% if beast_display != "" %}
           <span class="badge bg-secondary me-1">BEAST {{ beast_display }}</span>
           {% endif %}

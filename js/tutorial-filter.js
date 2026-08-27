@@ -106,6 +106,13 @@
     });
   }
 
+  // '2.7' -> 2007, so 2.10 sorts above 2.7. Missing or unparseable -> -1 (sorts last).
+  function versionKey(version) {
+    const parts = /^(\d+)(?:\.(\d+))?/.exec(version || '');
+    if (!parts) return -1;
+    return Number(parts[1]) * 1000 + Number(parts[2] || 0);
+  }
+
   function sortCards() {
     const grid = document.getElementById('tutorial-grid');
     if (!grid) return;
@@ -123,6 +130,12 @@
           const titleA = a.dataset.title || '';
           const titleB = b.dataset.title || '';
           return titleA.localeCompare(titleB);
+
+        case 'beastversion':
+          // Newest first; tutorials with no version last, ties broken by title.
+          const verDiff = versionKey(b.dataset.beastversion) - versionKey(a.dataset.beastversion);
+          if (verDiff !== 0) return verDiff;
+          return (a.dataset.title || '').localeCompare(b.dataset.title || '');
 
         default:
           return 0;
