@@ -72,6 +72,7 @@ mdarray.each { |md|
 				header["title"] = title
 			end
 			header["tutorial"]  = tutorial_name
+			header["beastversion"] ||= header["beastversion_package"] if header["beastversion_package"]   # {{ page.beastversion }} in tutorial text, renamed field
 			# Main README serves at directory URL; other files use their basename
 			if is_main_readme
 				header["permalink"] = "/tutorials/#{tutorial_name}/"
