@@ -11,7 +11,12 @@ const CACHE_SIZE = 30;
 export function slugFromUrl(url) {
   const path = String(url || '').split(/[?#]/)[0];
   const m = /\/tutorials\/([^/]+)\/(?:index\.html)?$/.exec(path);
-  return m ? decodeURIComponent(m[1]) : '';
+  if (!m) return '';
+  try {
+    return decodeURIComponent(m[1]);
+  } catch (e) {
+    return '';   // malformed percent-escape: not one of our tutorial URLs
+  }
 }
 
 // Turn a Pagefind excerpt (HTML with <mark>) into a DocumentFragment that

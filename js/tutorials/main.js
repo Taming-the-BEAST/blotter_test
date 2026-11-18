@@ -122,7 +122,12 @@ async function start() {
     }
     if (fulltext.status === 'unavailable') return;
     ftTimer = setTimeout(async () => {
-      const result = await fulltext.search(q);
+      let result;
+      try {
+        result = await fulltext.search(q);
+      } catch (e) {
+        result = { error: true };   // never leave the status on "searching"
+      }
       if (match.normaliseQuery(state.q) !== q) return;   // query moved on
       if (result === null) return;                        // superseded by a newer search
       if (result.error) {

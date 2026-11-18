@@ -97,7 +97,7 @@ The repositories whose tutorials are included in the build are listed under `tut
   export GITHUB_TOKEN=ghp_your_token_here
   ruby _scripts/update-and-preprocess.rb
   ```
-  Clones missing tutorial repos from GitHub into `tutorials/`, runs preprocessing, generates licence pages and writes `_data/tutorials.yml`, `_data/popular_keywords.yml` and `_data/popular_packages.yml`.
+  Clones missing tutorial repos from GitHub into `tutorials/`, runs preprocessing, generates licence pages and writes `_data/tutorials.yml`, `_data/popular_keywords.yml`, `_data/popular_packages.yml` and `_data/tutorial_workflows.yml` (the workflow filter options, in schema order).
 
   **Existing clones are reset to their upstream version** (`git fetch`, `git reset --hard`, `git clean -fdx`), so the site always shows the current tutorials. This discards any local changes inside `tutorials/<name>/`. To keep local edits (for example while working on a tutorial), skip the refresh:
   ```

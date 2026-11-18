@@ -4,11 +4,35 @@ categories:
  - tutorials
 ---
 
-{% for test in site.data.tutorials %}
-	{% if test.title == page.title %}
-		{% assign tutorial = test %}
-	{% endif %}
-{% endfor %}
+{% comment %}
+Find this tutorial's entry in _data/tutorials.yml. Every page of a tutorial
+(main README, LICENSE, ...) has `tutorial: <folder name>` in its front matter
+(set by the preprocessing scripts). Match on the folder (data written by
+generate-tutorial-data.rb), then the URL, case-insensitively, and the title
+for older data. `is_main` (main page, indexed for full-text search) comes from
+the page's own URL and needs a folder or URL match, so a leftover clone that is
+not in the data is not indexed.
+{% endcomment %}
+{% assign tutorial = nil %}
+{% assign is_main = false %}
+{% if page.tutorial %}
+	{% assign tutorial_dir = page.tutorial | append: '' %}
+	{% assign tutorial_dir_lc = tutorial_dir | downcase %}
+	{% assign tutorial_url_lc = '/tutorials/' | append: tutorial_dir_lc | append: '/' %}
+	{% assign page_url_lc = page.url | replace: 'index.html', '' | downcase %}
+	{% assign tutorial = site.data.tutorials | where: 'folder', tutorial_dir | first %}
+	{% unless tutorial %}
+		{% for t in site.data.tutorials %}
+			{% assign t_folder_lc = t.folder | append: '' | downcase %}
+			{% assign t_url_lc = t.url | append: '' | downcase %}
+			{% if t_folder_lc == tutorial_dir_lc or t_url_lc == tutorial_url_lc %}{% assign tutorial = t %}{% break %}{% endif %}
+		{% endfor %}
+	{% endunless %}
+	{% if tutorial and page_url_lc == tutorial_url_lc %}{% assign is_main = true %}{% endif %}
+{% endif %}
+{% unless tutorial %}
+	{% assign tutorial = site.data.tutorials | where: 'title', page.title | first %}
+{% endunless %}
 
 <div class="row">
 	<div class="hidden-xs hidden-sm col-md-12">
@@ -19,7 +43,7 @@ categories:
 			site.pages and could pick a README.md.backup page with the same title.
 			{% endcomment %}
 			{% assign crumb_name = page.title | split: '/' | last | replace: '-', ' ' %}
-			<li><a class="off" href="{{ page.url | replace: 'index.html', '' | relative_url }}">{{ crumb_name }}</a></li>
+			<li><a class="off" href="{{ page.url | replace: 'index.html', '' | relative_url }}">{{ crumb_name | escape }}</a></li>
 			</ol>
 		</div>
 		<p>
@@ -33,54 +57,71 @@ categories:
 			<span class="tag badge-deprecated">Deprecated</span>
 			{% endif %}
 			{% if tutorial.workflow %}
-			<span class="tag badge-workflow">{{ tutorial.workflow }}</span>
+			<span class="tag badge-workflow">{{ tutorial.workflow | escape }}</span>
 			{% endif %}
 			{% for domain in tutorial.domains %}
-			<span class="tag badge-domain">{{ domain | capitalize }}</span>
+			<span class="tag badge-domain">{{ domain | capitalize | escape }}</span>
 			{% endfor %}
 			{% for package in tutorial.packages %}
-			<span class="tag badge-package">{{ package }}</span>
+			<span class="tag badge-package">{{ package | escape }}</span>
 			{% endfor %}
 		</div>
 
 		<!-- Deprecated warning -->
 		{% if tutorial.status == 'deprecated' %}
 		<div class="alert alert-secondary" style="padding: 15px; margin: 20px 0; border-radius: 6px; border-left: 4px solid #999; background: #f0f0f0; color: #555;">
-			<strong>⚠️ Deprecated Tutorial:</strong>
+			<strong>Deprecated tutorial:</strong>
 			{% if tutorial.deprecated_reason %}
 			{{ tutorial.deprecated_reason | escape }}
 			{% else %}
 			This tutorial is deprecated and may be outdated.
 			{% endif %}
-			{% if tutorial.deprecated_alternative %}
-			<br><a href="{{ tutorial.deprecated_alternative | relative_url }}">View recommended alternative →</a>
+			{% comment %}
+			Only site paths ("/tutorials/...") and http(s) URLs are linked; anything
+			else (e.g. "javascript:") is ignored. The value is escaped in the attribute.
+			{% endcomment %}
+			{% assign alt = tutorial.deprecated_alternative | append: '' | strip %}
+			{% assign alt_lc = alt | downcase %}
+			{% assign alt_1 = alt | slice: 0, 1 %}
+			{% assign alt_7 = alt_lc | slice: 0, 7 %}
+			{% assign alt_8 = alt_lc | slice: 0, 8 %}
+			{% comment %}
+			Browsers read "\" as "/" and drop tabs and newlines in URLs, so "/\host"
+			or "/<tab>/host" would leave the site: values with a backslash or any
+			whitespace (split: ' ' splits on all of them) are never linked. Site
+			paths with "//" or dot segments ("/a/..//host") are not linked either;
+			relative_url would also stop the build on them. Full URLs are output
+			as they are, without relative_url.
+			{% endcomment %}
+			{% assign alt_nows = alt | split: ' ' | join: '' %}
+			{% assign alt_link = '' %}
+			{% if alt contains '\' or alt_nows != alt %}
+			{% elsif alt_8 == 'https://' or alt_7 == 'http://' %}
+				{% assign alt_link = alt %}
+			{% elsif alt_1 == '/' %}
+				{% unless alt contains '//' or alt contains '/.' or alt_lc contains '%2e' %}
+					{% assign alt_link = alt | relative_url %}
+				{% endunless %}
+			{% endif %}
+			{% if alt_link != '' %}
+			<br><a href="{{ alt_link | escape }}">View recommended alternative -&gt;</a>
 			{% endif %}
 		</div>
 		{% endif %}
 
 		<div class="head">
 			{% if tutorial.description == blank %}
-				{{ page.subtitle }}
+				{% comment %} Tags are dropped and the rest escaped; character references such as &ndash; still render. {% endcomment %}
+				{{ page.subtitle | strip_html | escape | replace: '&amp;', '&' }}
 			{% else %}
-				{{ tutorial.description }}
+				{{ tutorial.description | strip_html | escape | replace: '&amp;', '&' }}
 			{% endif %}
 		</div>
 		{% if page.author %}
 		<div class="smallhead">
 			by
 			{% assign authors = page.author | split: ',' %}
-			{% for author in authors %}
-				{% case forloop.index %}
-					{% when 1 %}
-						{{ author }}
-					{% when forloop.length - 1 %}
-						{% unless forloop.length == 1 %}
-							{{ author | prepend: 'and ' }}
-						{% endunless %}
-					{% else %}
-						{{ author | prepend: ', ' }}
-				{% endcase %}
-			{% endfor %}
+			{% for author in authors %}{% if forloop.first %}{{ author | strip | escape }}{% elsif forloop.last %} and {{ author | strip | escape }}{% else %}, {{ author | strip | escape }}{% endif %}{% endfor %}
 		</div>
 		{% endif %}
 
@@ -113,13 +154,13 @@ categories:
 				<div class="smallspacer"></div>
 				<li> 
 					<i class="bi bi-file-text"></i>
-					<a class="off" href="{{ pdf | prepend: '/' | prepend: site.baseurl }}">{{ pdf | split: '/' | last }}</a>	
+					<a class="off" href="{{ pdf | prepend: '/' | relative_url | escape }}">{{ pdf | split: '/' | last | escape }}</a>	
 				</li>
 			{% endfor %}
 			<div class="smallspacer"></div>
 			<li>
 				<i class="bi bi-github"></i>
-				<a class="off" href="https://github.com/{{ tutorial.repo }}" target="_blank">Github repository</a>
+				<a class="off" href="https://github.com/{{ tutorial.repo | escape }}" target="_blank">Github repository</a>
 			</li>
 			<div class="smallspacer"></div>
 			{% comment %} Only link the licence when a LICENSE page was generated for this tutorial. {% endcomment %}
@@ -135,7 +176,7 @@ categories:
 			{% endif %}
 			<li>			
 				<i class="bi bi-bar-chart"></i>
-				<a class="off" href="https://github.com/{{ tutorial.repo }}/graphs/traffic" target="_blank">
+				<a class="off" href="https://github.com/{{ tutorial.repo | escape }}/graphs/traffic" target="_blank">
 				Statistics</a>
 			</li>
 			</ul>
@@ -152,9 +193,8 @@ categories:
 				<div class="smallspacer"></div>
 				<li> 
 					<i class="bi bi-justify"></i>
-					<!--a class="off" href="https://github.com/{{tutorial.repo}}/raw/{{ tutorial.default_branch }}/data/{{ filename }}" target="_blank" rel="nofollow"-->
-					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo }}/{{ tutorial.default_branch }}/data/{{ filename }}" target="_blank" rel="nofollow">
-						{{ filename | truncate: 30 }}
+					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo | escape }}/{{ tutorial.default_branch | escape }}/data/{{ filename | escape }}" target="_blank" rel="nofollow">
+						{{ filename | truncate: 30 | escape }}
 					</a>
 				</li>
 			{% endfor %}
@@ -173,9 +213,8 @@ categories:
 				<div class="smallspacer"></div>
 				<li> 
 					<i class="bi bi-code-slash"></i>
-					<!--a class="off" href="https://github.com/{{tutorial.repo}}/raw/{{ tutorial.default_branch }}/xml/{{ filename }}" target="_blank" download rel="nofollow"-->
-					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo }}/{{ tutorial.default_branch }}/xml/{{ filename }}" target="_blank" rel="nofollow">
-						{{ filename | truncate: 30 }}
+					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo | escape }}/{{ tutorial.default_branch | escape }}/xml/{{ filename | escape }}" target="_blank" rel="nofollow">
+						{{ filename | truncate: 30 | escape }}
 					</a>
 				</li>
 			{% endfor %}
@@ -194,9 +233,8 @@ categories:
 				<div class="smallspacer"></div>
 				<li> 
 					<i class="bi bi-gear"></i>
-					<!--a class="off" href="https://github.com/{{tutorial.repo}}/raw/{{ tutorial.default_branch }}/scripts/{{ filename }}" target="_blank" download rel="nofollow"-->
-					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo }}/{{ tutorial.default_branch }}/scripts/{{ filename }}" target="_blank" rel="nofollow">
-						{{ filename | truncate: 30 }}
+					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo | escape }}/{{ tutorial.default_branch | escape }}/scripts/{{ filename | escape }}" target="_blank" rel="nofollow">
+						{{ filename | truncate: 30 | escape }}
 					</a>
 				</li>
 			{% endfor %}
@@ -215,9 +253,8 @@ categories:
 				<div class="smallspacer"></div>
 				<li> 
 					<i class="bi bi-file-text"></i>
-					<!--a class="off" href="https://github.com/{{tutorial.repo}}/raw/{{ tutorial.default_branch }}/precooked_runs/{{ filename }}" target="_blank" download rel="nofollow"-->
-					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo }}/{{ tutorial.default_branch }}/precooked_runs/{{ filename }}" target="_blank" rel="nofollow">
-						{{ filename | truncate: 30 }}
+					<a class="off" href="https://raw.githubusercontent.com/{{ tutorial.repo | escape }}/{{ tutorial.default_branch | escape }}/precooked_runs/{{ filename | escape }}" target="_blank" rel="nofollow">
+						{{ filename | truncate: 30 | escape }}
 					</a>
 				</li>
 			{% endfor %}
@@ -232,8 +269,9 @@ categories:
 			{% for contributor in tutorial.contributors %}	
 			<div class="smallspacer"></div>				
 			<div>
-				<a class="off" href="{{ contributor.url }}">
-    			<img class="pull-left avatar" src="{{ contributor.avatar }}" alt="">
+				{% assign c_url = contributor.url | append: '' %}{% assign c_8 = c_url | slice: 0, 8 %}
+				<a class="off" href="{% if c_8 == 'https://' %}{{ c_url | escape }}{% else %}#{% endif %}">
+    			<img class="pull-left avatar" src="{{ contributor.avatar | escape }}" alt="">
     			<div class="handlebox" style="padding-left:5px;">
     				{{ contributor.login | escape }}
     			</div>
@@ -251,7 +289,8 @@ categories:
 				<div class="smallspacer"></div>
 				<li> 
 					<i class="bi bi-check-square"></i>
-					<a class="off" href="{{ commit.url }}">
+					{% assign m_url = commit.url | append: '' %}{% assign m_8 = m_url | slice: 0, 8 %}
+					<a class="off" href="{% if m_8 == 'https://' %}{{ m_url | escape }}{% else %}#{% endif %}">
 					{{ commit.date | date_to_string }} - <span class="text-gray">{{ commit.message | escape }}</span>
 					</a> 
 				</li>
@@ -264,21 +303,23 @@ categories:
 
 	<div class="col-md-8">
 		{% comment %}
-		Only the main tutorial page (one with an entry in _data/tutorials.yml) is
+		Only the tutorial's main page (is_main) is
 		indexed. LICENSE and other secondary pages that reuse this layout are not.
 		{% endcomment %}
-		<div class="post" {% if tutorial %}data-pagefind-body{% else %}data-pagefind-ignore="all"{% endif %}>
-			<!-- Pagefind meta and filter tags -->
-			<!-- Weighted so a title/keyword/subtitle hit outranks a body-text hit.
-			     Pagefind default weight is 1; headings inside {{ content }} are
-			     auto-weighted by level (h1 highest), so only these need boosting. -->
-			<h1 data-pagefind-meta="title" data-pagefind-weight="10" style="display:none;">{{ page.title }}</h1>
+		<div class="post" {% if is_main %}data-pagefind-body{% else %}data-pagefind-ignore="all"{% endif %}>
+			{% comment %}
+			Pagefind meta tags, weighted so a title/keyword/subtitle hit outranks a
+			body-text hit. Pagefind's default weight is 1; headings inside the page
+			content are weighted by level (h1 highest), so only these need boosting.
+			(A Liquid comment: an HTML comment would render the page content into it.)
+			{% endcomment %}
+			<h1 data-pagefind-meta="title" data-pagefind-weight="10" style="display:none;">{{ page.title | escape }}</h1>
 			{% if tutorial.keywords.size > 0 %}
 			<div data-pagefind-weight="7" style="display:none;">{{ tutorial.keywords | join: ' ' | escape }}</div>
 			{% endif %}
 			{% assign subtitle = tutorial.description | default: page.subtitle %}
 			{% if subtitle %}
-			<div data-pagefind-weight="5" style="display:none;">{{ subtitle }}</div>
+			<div data-pagefind-weight="5" style="display:none;">{{ subtitle | strip_html | escape | replace: '&amp;', '&' }}</div>
 			{% endif %}
 			{% comment %}
 			No data-pagefind-filter tags: the listing filters on the client

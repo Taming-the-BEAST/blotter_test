@@ -158,5 +158,5 @@ test('deprecated scope: counts and status follow the deprecated section', () => 
 });
 
 test('diacritics are folded in queries', () => {
-  assert.deepEqual(tokenize('M\u00fcller  Pe\u010derska'), ['muller', 'pecerska']);
+  assert.deepEqual(tokenize('Müller  Pečerska'), ['muller', 'pecerska']);
 });

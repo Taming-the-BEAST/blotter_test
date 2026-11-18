@@ -76,7 +76,20 @@ categories:
           <fieldset class="tl-facet" data-facet="workflow">
             <legend class="tl-facet__legend">Workflow</legend>
             <div class="tl-facet__options">
-              {% assign workflows = "Getting started|Basic workflow|Advanced analysis|Troubleshooting|Validation" | split: "|" %}
+              {% comment %}
+              Workflows in schema order (written to _data/tutorial_workflows.yml by
+              generate-tutorial-data.rb from tutorials/tutorial_schema.yml), with a
+              built-in list for older data, plus any workflow a tutorial uses that is
+              missing from that list, so every tutorial stays filterable.
+              {% endcomment %}
+              {% assign workflows = site.data.tutorial_workflows %}
+              {% if workflows == nil or workflows.size == 0 %}
+                {% assign workflows = "Getting started|Basic workflow|Advanced analysis|Troubleshooting|Validation" | split: "|" %}
+              {% endif %}
+              {% assign used_workflows = site.data.tutorials | map: "workflow" | compact | uniq %}
+              {% for wf in used_workflows %}
+                {% if wf != "" %}{% unless workflows contains wf %}{% assign workflows = workflows | push: wf %}{% endunless %}{% endif %}
+              {% endfor %}
               {% for wf in workflows %}
               <label class="form-check tl-opt">
                 <input class="form-check-input" type="checkbox" name="workflow" value="{{ wf | escape }}">

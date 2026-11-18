@@ -14,24 +14,26 @@ _data/tutorials.yml files that lack it. Only major.minor is shown.
 {% endcomment %}
 {% assign beast_pkg = tut.beast_package_minor %}
 {% if beast_pkg == nil or beast_pkg == "" %}
-  {% assign beast_pkg_raw = tut.beastversion_package | append: "" | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
+  {% assign beast_pkg_raw = tut.beastversion_package | append: "" | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | remove: "=" | remove: "v" | remove: "V" | strip %}
   {% assign beast_pkg = beast_pkg_raw | split: "." | slice: 0, 2 | join: "." %}
 {% endif %}
 {% assign slug = tut.slug | default: tut.url | split: "/" | last %}
 {% assign deprecated = false %}
 {% if tut.status == 'deprecated' %}{% assign deprecated = true %}{% endif %}
 {% assign max_pkgs = 3 %}
+{% comment %} "Updated" date: generator's `updated`, else the latest commit date (older data). {% endcomment %}
+{% assign updated = tut.updated | default: tut.commits.first.date %}
 <li class="tutorial-card tl-item"
     data-slug="{{ slug | escape }}"
     data-title="{{ tut.title | escape }}"
-    data-desc="{{ tut.description | escape }}"
+    data-desc="{{ tut.description | strip_html | escape }}"
     data-authors="{{ tut.author | escape }}"
     data-workflow="{{ tut.workflow | escape }}"
     data-packages="{{ tut.packages | join: '|' | escape }}"
     data-domains="{{ tut.domains | join: '|' | escape }}"
     data-keywords="{{ tut.keywords | join: '|' | escape }}"
     data-status="{{ tut.status | escape }}"
-    data-date="{{ tut.commits.first.date | date: '%Y%m%d' }}"
+    data-date="{{ updated | date: '%Y%m%d' }}"
     data-beast-pkg="{{ beast_pkg | escape }}">
   <article class="card tl-card{% if deprecated %} tl-card--deprecated{% endif %}" aria-labelledby="t-{{ slug | escape }}">
     <div class="card-body tl-card__body">
@@ -49,7 +51,7 @@ _data/tutorials.yml files that lack it. Only major.minor is shown.
       <p class="tl-card__reason">{{ tut.deprecated_reason | escape }}</p>
       {% endif %}
 
-      {% if tut.description %}<p class="tl-card__desc">{{ tut.description | escape }}</p>{% endif %}
+      {% if tut.description %}<p class="tl-card__desc">{{ tut.description | strip_html | escape | replace: '&amp;', '&' }}</p>{% endif %}
       {% if tut.author %}<p class="tl-card__authors">{{ tut.author | replace: ',', ', ' | escape }}</p>{% endif %}
 
       <!-- Full-text excerpt slot, filled by the script -->
@@ -69,10 +71,10 @@ _data/tutorials.yml files that lack it. Only major.minor is shown.
         {% endif %}
       </div>
 
-      {% if tut.commits.first.date %}
+      {% if updated %}
       <div class="tl-card__footer">
         <i class="bi bi-clock-history" aria-hidden="true"></i>
-        Updated <time datetime="{{ tut.commits.first.date | date: '%Y-%m-%d' }}">{{ tut.commits.first.date | date: "%b %Y" }}</time>
+        Updated <time datetime="{{ updated | date: '%Y-%m-%d' }}">{{ updated | date: "%b %Y" }}</time>
       </div>
       {% endif %}
     </div>

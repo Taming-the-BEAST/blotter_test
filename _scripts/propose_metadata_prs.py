@@ -22,6 +22,16 @@ BRANCH = "tutorial-metadata-migration"
 FIELDS = ["beastversion_tutorial", "workflow", "status",
           "keywords", "packages", "domains", "beastversion_package"]
 
+# Allowed `workflow` values. A legacy `tutorial_type` from the old vocabulary
+# (Core / Model set-up / Applied) is not a valid workflow and is dropped, as in
+# _scripts/tutorial_metadata_aliases.rb.
+SCHEMA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tutorials", "tutorial_schema.yml")
+
+
+def read_workflows(schema_path=SCHEMA_FILE):
+    return list((yaml.safe_load(open(schema_path, encoding="utf-8")) or {}).get("workflows") or [])
+
+
 TITLE = "Migrate README frontmatter to the new tutorial metadata schema"
 
 BODY = """\
@@ -59,7 +69,7 @@ def read_metadata(metadata_path):
     return {repo.lower(): entry for repo, entry in data.items()}
 
 
-def rewrite_frontmatter(text, entry):
+def rewrite_frontmatter(text, entry, workflows=None):
     """Return the README with migrated frontmatter, or None if it has none.
 
     Note: YAML comments in the frontmatter are dropped and quoting may be
@@ -74,7 +84,11 @@ def rewrite_frontmatter(text, entry):
     body = text[match.end():]
 
     front.setdefault("beastversion_tutorial", front.pop("beastversion", None))
-    front.setdefault("workflow", front.pop("tutorial_type", None))
+    legacy_type = front.pop("tutorial_type", None)
+    if workflows is None:
+        workflows = read_workflows()
+    if legacy_type in workflows:
+        front.setdefault("workflow", legacy_type)
     front.pop("level", None)
     front.update({k: v for k, v in entry.items() if k in FIELDS})
     front = {k: v for k, v in front.items() if v is not None}

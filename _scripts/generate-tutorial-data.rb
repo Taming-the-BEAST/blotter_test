@@ -43,6 +43,7 @@ require 'octokit'
 require 'yaml'
 require 'date'
 require_relative 'octokit_client'
+require_relative 'tutorial_metadata_aliases'
 
 module Tutorials
 
@@ -118,21 +119,9 @@ module Tutorials
 		end
 	end
 
-	# A frontmatter field counts as defined when present and not nil or a
-	# blank string. An explicit empty list (`packages: []`) IS defined.
 	def self.defined_value?(header, field)
-		return false unless header.key?(field)
-		v = header[field]
-		!(v.nil? || (v.is_a?(String) && v.strip.empty?))
+		TutorialMetadataAliases.defined_value?(header, field)
 	end
-
-	# Legacy frontmatter keys and the canonical key they map to. Resolved
-	# before the fallback merge, so an old-style README key (e.g.
-	# `beastversion`) still wins over the central fallback file.
-	ALIASES = {
-		"beastversion_tutorial" => ["beastversion"],
-		"workflow" => ["tutorial_type"],
-	}
 
 	SCHEMA_FILE = "tutorials/tutorial_schema.yml"
 
@@ -143,21 +132,12 @@ module Tutorials
 		@allowed_workflows ||= Array(schema["workflows"])
 	end
 
+	# Legacy keys (beastversion, tutorial_type): shared with the validator.
 	def self.resolve_aliases(repo, tutorial_header)
-		header = tutorial_header.dup
-		ALIASES.each do |canonical, legacy_keys|
-			next if defined_value?(header, canonical)
-			legacy_keys.each do |legacy|
-				next unless defined_value?(header, legacy)
-				if canonical == "workflow" && !allowed_workflows.empty? &&
-					!allowed_workflows.include?(header[legacy])
-					puts "\t\tWARNING: #{repo} legacy '#{legacy}: #{header[legacy]}' is not a valid workflow - ignored"
-					break
-				end
-				header[canonical] = header[legacy]
-				puts "\t\tINFO: #{repo} uses legacy key '#{legacy}', treating it as '#{canonical}'"
-				break
-			end
+		header, messages = TutorialMetadataAliases.resolve(tutorial_header, allowed_workflows)
+		messages.each do |level, text|
+			text += " - ignored" if level == :invalid
+			puts "\t\t#{level == :info ? 'INFO' : 'WARNING'}: #{repo} #{text}"
 		end
 		header
 	end
@@ -180,7 +160,7 @@ module Tutorials
 			fallback_present = !blank?(fallback[field])
 
 			if own_present && fallback_present
-				puts "\t\tWARNING: #{repo} now defines '#{field}' itself — remove it from #{METADATA_FALLBACK_FILE}"
+				puts "\t\tWARNING: #{repo} now defines '#{field}' itself - remove it from #{METADATA_FALLBACK_FILE}"
 			elsif !own_present && fallback_present
 				merged[field] = fallback[field]
 			end
@@ -221,7 +201,11 @@ module Tutorials
 			
 				# load repo metadata
 				octokit_repo = client.repository(repo)
-				reponame  = octokit_repo.name
+				# The clone lives in tutorials/<folder>, named after the config
+				# entry (as in update-and-preprocess.rb), which can differ from
+				# GitHub's canonical name (case, renamed repos). Use the folder
+				# for file paths and the page URL.
+				reponame  = repo.split('/').drop(1).join('')
 
 				tutorial_owner = octokit_repo.owner.login
 				tutorial_description = octokit_repo.description
@@ -250,9 +234,9 @@ module Tutorials
 				tutorial_level  = tutorial_header["level"]
 				tutorial_title  = tutorial_header["title"]
 				tutorial_author = tutorial_header["author"]
-				tutorial_beast  = tutorial_header["beastversion_tutorial"] || tutorial_header["beastversion"]
+				tutorial_beast  = tutorial_header["beastversion_tutorial"]   # legacy beastversion handled in resolve_aliases
 				tutorial_beast_package = tutorial_header["beastversion_package"]
-				tutorial_beast_minor = normalise_minor(tutorial_beast, repo, "beastversion_tutorial")
+				normalise_minor(tutorial_beast, repo, "beastversion_tutorial")   # only for its warnings
 				tutorial_beast_package_minor = normalise_minor(tutorial_beast_package, repo, "beastversion_package")
 				tutorial_workflow = tutorial_header["workflow"]   # legacy tutorial_type handled in resolve_aliases
 				tutorial_packages = canonical_packages(repo, Array(tutorial_header["packages"]).reject { |v| v.to_s.strip.empty? })
@@ -335,12 +319,12 @@ module Tutorials
 					"level" => tutorial_level,
 					"beastversion_tutorial" => tutorial_beast,
 					"beastversion_package" => tutorial_beast_package,
-					# Derived fields for the tutorial listing:
+					# Derived fields for the tutorial listing (_includes/tutorial_card.html):
 					# beast_package_minor drives the BEAST version filter, sort and badge;
-					# beast_minor (tested-with version) is informational only.
+					# updated is the card's "Updated" date.
 					"beast_package_minor" => tutorial_beast_package_minor,
-					"beast_minor" => tutorial_beast_minor,
 					"slug" => reponame,
+					"folder" => reponame,
 					"updated" => (tutorial_commits.first && tutorial_commits.first["date"].respond_to?(:strftime)) ? tutorial_commits.first["date"].strftime("%Y-%m-%d") : nil,
 					"workflow" => tutorial_workflow,
 					"packages" => tutorial_packages,
@@ -412,3 +396,5 @@ tutorial_data = Tutorials.generate_data("_config.yml")
 Tutorials.write_data(tutorial_data, "_data/tutorials.yml")
 Tutorials.write_ranked(tutorial_data, "keywords", "_data/popular_keywords.yml", 20)
 Tutorials.write_ranked(tutorial_data, "packages", "_data/popular_packages.yml")
+# Workflow filter options on the tutorial listing, in schema order.
+File.write("_data/tutorial_workflows.yml", Array(Tutorials.schema["workflows"]).to_yaml)

@@ -31,10 +31,13 @@ config["tutorials"].each do |repo|
 	elsif ENV["TTB_NO_REFRESH"] == "1"
 		puts "TTB_NO_REFRESH=1: keeping existing clone of #{name} as is"
 	else
-		# Bring an existing clone to the upstream default branch. Earlier
-		# preprocessing edits (README.md, LICENSE.md, built PDFs) are discarded
-		# here and regenerated below. Set TTB_NO_REFRESH=1 to skip this step,
-		# e.g. while editing a tutorial locally.
+		# Bring an existing clone to the upstream default branch, so builds that
+		# reuse tutorials/ (servers, Docker volumes) publish current tutorials.
+		# This DISCARDS uncommitted changes and untracked files in the clone,
+		# including gitignored build outputs (git clean -x), so after a
+		# successful refresh no stale generated file is left; preprocessing
+		# edits and the PDF (from main.tex) are regenerated below. Set TTB_NO_REFRESH=1 to skip this
+		# step, e.g. while editing a tutorial locally.
 		#
 		# Only touch folders that are their own git repository. tutorials/ sits
 		# inside the site repo, so in a plain folder (copied by hand, unpacked

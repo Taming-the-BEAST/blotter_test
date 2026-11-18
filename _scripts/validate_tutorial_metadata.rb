@@ -5,6 +5,7 @@
 require 'yaml'
 require 'date'
 require 'set'
+require_relative 'tutorial_metadata_aliases'
 
 class TutorialMetadataValidator
   attr_reader :schema, :errors, :warnings
@@ -15,12 +16,6 @@ class TutorialMetadataValidator
     @warnings = []
   end
   
-  # Legacy keys accepted in place of the canonical one (with a warning).
-  LEGACY_ALIASES = {
-    'beastversion_tutorial' => 'beastversion',
-    'workflow' => 'tutorial_type',
-  }.freeze
-
   def validate(tutorial_frontmatter)
     @errors = []
     @warnings = []
@@ -50,12 +45,18 @@ class TutorialMetadataValidator
     Array(@schema[key])
   end
 
+  # Same legacy-key handling as generate-tutorial-data.rb (shared module).
   def apply_legacy_aliases(frontmatter)
-    fm = frontmatter.dup
-    LEGACY_ALIASES.each do |canonical, legacy|
-      next if fm.key?(canonical) || !fm.key?(legacy)
-      fm[canonical] = fm[legacy]
-      @warnings << "Legacy field '#{legacy}' used; rename it to '#{canonical}'"
+    fm, messages = TutorialMetadataAliases.resolve(frontmatter, schema_list('workflows'))
+    messages.each do |level, text, canonical, legacy|
+      if level == :invalid
+        # The generator ignores this value; here it is validated as the
+        # canonical field, so the author gets one "Invalid workflow" error.
+        fm[canonical] = frontmatter[legacy]
+        @warnings << "Legacy field '#{legacy}' used; rename it to '#{canonical}'"
+      else
+        @warnings << text.sub(/\Alegacy/, 'Legacy')
+      end
     end
     fm
   end
@@ -249,9 +250,9 @@ if __FILE__ == $0
     puts "=" * 60
     
     if result[:valid]
-      puts "✓ VALID"
+      puts "OK: VALID"
     else
-      puts "✗ INVALID"
+      puts "ERROR: INVALID"
       puts "\nErrors:"
       result[:errors].each { |e| puts "  - #{e}" }
     end

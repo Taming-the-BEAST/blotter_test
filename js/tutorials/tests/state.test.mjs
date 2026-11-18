@@ -62,4 +62,5 @@ test('slugFromUrl accepts only main tutorial pages', () => {
   assert.equal(slugFromUrl('/tutorials/Skyline-plots/LICENSE.html'), '');
   assert.equal(slugFromUrl('/tutorials/'), '');
   assert.equal(slugFromUrl('/news/x/'), '');
+  assert.equal(slugFromUrl('/tutorials/bad%E0%A4%A/'), '');   // malformed escape does not throw
 });

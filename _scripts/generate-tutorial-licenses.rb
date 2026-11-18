@@ -10,6 +10,9 @@ require 'date'
 
 FENCE = "```"
 
+# Keys that mark a "---" block at the top as real front matter (see below).
+FRONT_MATTER_KEYS = %w[layout title permalink tutorial]
+
 # Only licences directly in a tutorial's root folder (tutorials/<name>/LICENSE*),
 # not ones bundled deeper inside data or script folders.
 licensearray = Dir.glob("tutorials/*/LICENSE*").reject { |f| f.end_with?(".html") }
@@ -39,17 +42,39 @@ licensearray.each { |license|
 	# tutorial name: the folder directly under tutorials/
 	tutorial_name = File.basename(dir)
 	tutorial_name = nil unless tutorial_name =~ /^[^_]/
-	# Must not equal the tutorial's own title (the tutorial layout looks up its
-	# metadata by title), and reads well in the breadcrumb.
+	# The tutorial layout finds the tutorial's data through `tutorial:` (set
+	# below), so the licence page gets the same sidebar as the tutorial. The
+	# title only feeds the breadcrumb ("<name> License").
 	title = tutorial_name ? "#{tutorial_name}/License" : nil
 
-	contents = File.read(license)
+	# Drop a byte order mark and use LF line endings, so the front matter is
+	# found and the generated file has consistent line endings.
+	contents = File.read(license, encoding: "bom|utf-8").gsub(/\r\n?/, "\n")
 
-	# split off existing YAML front matter, if any
+	# Split off existing front matter, if any. Licence files are not usually
+	# Markdown with front matter, so text between two "---" lines at the top
+	# (a rule, a title, "Copyright: 2020 X", a "# heading") is licence text and
+	# is kept. It only counts as front matter when it is empty or a YAML
+	# mapping with a key Jekyll or this script writes (every file processed
+	# before has `layout: tutorial`, so repeated runs stay idempotent).
 	header = {}
-	if contents =~ /\A---\s*\n(.*?)\n---\s*\n/m
-		header = YAML.load($1, permitted_classes: [Date, Time], aliases: true) || {}
-		contents = $'
+	if contents =~ /\A---[ \t]*\n(?:(.*?)\n)?---[ \t]*(?:\n|\z)/m
+		block = $1.to_s
+		rest = $'
+		if block.strip.empty?
+			contents = rest
+		else
+			parsed = begin
+				YAML.load(block, permitted_classes: [Date, Time], aliases: true)
+			rescue Psych::Exception => e
+				puts "WARNING: #{license}: text between the first two '---' lines is not valid YAML (#{e.message.lines.first.strip}); keeping it as licence text"
+				nil
+			end
+			if parsed.is_a?(Hash) && (parsed.keys.map(&:to_s) & FRONT_MATTER_KEYS).any?
+				header = parsed
+				contents = rest
+			end
+		end
 	end
 
 	header["layout"] = "tutorial"
