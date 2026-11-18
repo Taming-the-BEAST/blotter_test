@@ -24,24 +24,49 @@ async function start() {
     import('./view.js' + v),
   ]);
 
+  const byId = id => document.getElementById(id);
   const ui = {
-    grid: document.getElementById('tutorial-grid'),
-    form: document.getElementById('tl-search-form'),
-    q: document.getElementById('tl-q'),
-    clear: document.getElementById('tl-clear'),
-    tryRow: document.getElementById('tl-try'),
-    sort: document.getElementById('tl-sort'),
-    legacy: document.getElementById('show-legacy'),
-    status: document.getElementById('tl-status'),
-    empty: document.getElementById('tl-empty'),
-    reset: document.getElementById('tl-reset'),
-    showAll: document.getElementById('package-show-all'),
-    filterButtons: [...root.querySelectorAll('[data-filter][data-value]')],
+    grid: byId('tutorial-grid'),
+    form: byId('tl-search-form'),
+    q: byId('tl-q'),
+    clear: byId('tl-clear'),
+    tryRow: byId('tl-try'),
+    filters: byId('tl-filters'),
+    filterCount: byId('tl-filter-count'),
+    filterCountSr: byId('tl-filter-count-sr'),
+    beastOptions: byId('tl-beast-options'),
+    packageOptions: byId('tl-package-options'),
+    packageFilter: byId('tl-package-filter'),
+    resetFilters: byId('tl-reset-filters'),
+    showResults: byId('tl-show-results'),
+    active: byId('tl-active'),
+    activeChips: byId('tl-active-chips'),
+    clearAll: byId('tl-clear-all'),
+    resultsHeading: byId('tl-results-h'),
+    sort: byId('tl-sort'),
+    legacy: byId('show-legacy'),
+    status: byId('tl-status'),
+    empty: byId('tl-empty'),
+    reset: byId('tl-reset'),
+    facetInputs: () => ui.filters.querySelectorAll('input[type="checkbox"][name]'),
   };
-  if (!ui.grid || !ui.q || !ui.sort || !ui.status) return;
+  const required = ['grid', 'form', 'q', 'clear', 'filters', 'filterCount', 'filterCountSr',
+    'active', 'activeChips', 'sort', 'status'];
+  if (required.some(k => !ui[k])) return;
 
   const items = catalogue.buildCatalogue(root);
-  const options = catalogue.knownOptions(root, items);
+  const options = catalogue.knownOptions(root, items, match.versionKey);
+  view.buildBeastOptions(ui.beastOptions, options.beast, root.dataset.beastCurrent || '');
+
+  // Display text of each option, for the chips (e.g. capitalised domains).
+  const optionText = new Map();
+  for (const input of ui.facetInputs()) {
+    const label = input.closest('.tl-opt');
+    const text = label && label.querySelector('.tl-opt__label');
+    optionText.set(input.name + '\u0000' + input.value, text ? text.textContent.trim() : input.value);
+  }
+  const labelFor = (facet, value) => optionText.get(facet + '\u0000' + value) || value;
+
   const fulltext = fulltextMod.createFulltext(
     root.dataset.pagefindUrl || '/pagefind/pagefind.js',
     new Set(items.map(i => i.slug)),
@@ -65,68 +90,73 @@ async function start() {
   }
 
   // ---- full-text search ----
+  // "Searching" is derived, never stored: a text search is pending when the
+  // query is long enough, text search may still work, and the results for
+  // this exact query have not arrived (or failed) yet.
   let ftTimer = null;
-  let searching = false;
+  let ftFailedQ = null;
+
+  function isSearching() {
+    const q = match.normaliseQuery(state.q);
+    if (q.length < FT_MIN_CHARS || fulltext.status === 'unavailable') return false;
+    if (ftFailedQ === q) return false;
+    return !(state.fulltext.q === q && state.fulltext.hits);
+  }
 
   function scheduleFulltext() {
     clearTimeout(ftTimer);
     const q = match.normaliseQuery(state.q);
     if (q.length < FT_MIN_CHARS) {
       fulltext.cancel();
-      searching = false;
-      state.fulltext = { q: '', status: fulltext.status, hits: null };
       return;
     }
-    if (state.fulltext.q === q && state.fulltext.hits) return;
+    if (state.fulltext.q === q && state.fulltext.hits) {
+      fulltext.cancel();   // results for this query are already shown
+      return;
+    }
     if (fulltext.status === 'unavailable') return;
-    searching = true;
     ftTimer = setTimeout(async () => {
-      const hits = await fulltext.search(q);
-      if (hits === null) {
-        // Superseded by a newer search, or Pagefind is unavailable.
-        if (fulltext.status === 'unavailable' && match.normaliseQuery(state.q) === q) {
-          searching = false;
-          update({ history: 'none' });
-        }
-        return;
+      const result = await fulltext.search(q);
+      if (match.normaliseQuery(state.q) !== q) return;   // query moved on
+      if (result === null) return;                        // superseded by a newer search
+      if (result.error) {
+        ftFailedQ = q;                                    // show metadata results only
+      } else {
+        ftFailedQ = null;
+        state.fulltext = { q, status: fulltext.status, hits: result.hits };
       }
-      if (match.normaliseQuery(state.q) !== q) return;
-      searching = false;
-      state.fulltext = { q, status: fulltext.status, hits };
       update({ history: 'none' });
     }, FT_DEBOUNCE_MS);
   }
 
   // ---- URL / history ----
   let urlTimer = null;
+  function currentURL() {
+    const qs = stateMod.toURL(state);
+    return location.pathname + (qs ? '?' + qs : '') + location.hash;
+  }
   function syncURL(mode) {
     // 'none' (async full-text results, popstate) must not cancel a pending
     // typing update, or the query would never reach the URL.
     if (mode === 'none') return;
-    const qs = stateMod.toURL(state);
-    const url = location.pathname + (qs ? '?' + qs : '') + location.hash;
-    if (url === location.pathname + location.search + location.hash) return;
+    const url = currentURL();
     clearTimeout(urlTimer);
-    if (mode === 'push') {
-      history.pushState(null, '', url);
-    } else if (mode === 'typing') {
-      urlTimer = setTimeout(() => {
-        const now = stateMod.toURL(state);
-        history.replaceState(null, '', location.pathname + (now ? '?' + now : '') + location.hash);
-      }, URL_TYPING_MS);
-    } else if (mode === 'replace') {
-      history.replaceState(null, '', url);
-    }
+    if (url === location.pathname + location.search + location.hash) return;
+    if (mode === 'push') history.pushState(null, '', url);
+    else if (mode === 'replace') history.replaceState(null, '', url);
+    else if (mode === 'typing') urlTimer = setTimeout(() => history.replaceState(null, '', currentURL()), URL_TYPING_MS);
   }
 
   // ---- the single update path ----
-  function update({ history: mode = 'push' } = {}) {
+  function update({ history: mode = 'push', freezePackages = false } = {}) {
     const derived = match.derive(items, state, { options });
     view.render(ui, items, state, derived, {
       sanitiseExcerpt: html => fulltextMod.sanitiseExcerpt(html),
-      ftStatus: fulltext.status,
-      searching,
+      ftStatus: ftFailedQ && ftFailedQ === match.normaliseQuery(state.q) ? 'unavailable' : fulltext.status,
+      searching: isSearching(),
       setStatus,
+      labelFor,
+      freezePackages,
     });
     syncURL(mode);
   }
@@ -137,11 +167,25 @@ async function start() {
     update({ history: mode });
   }
 
-  // ---- events ----
+  function setFacet(facet, value, on) {
+    const set = new Set(state[facet]);
+    if (on) set.add(value); else set.delete(value);
+    state[facet] = set;
+  }
+
+  function clearFacets() {
+    for (const facet of match.FACETS) state[facet] = new Set();
+  }
+
+  // ---- events: search ----
+  const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   ui.form.addEventListener('submit', e => {
     e.preventDefault();
-    ui.q.blur();
-    ui.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // On touch devices, Enter closes the keyboard and shows the results.
+    if (coarse) {
+      ui.q.blur();
+      ui.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 
   ui.q.addEventListener('input', () => setQuery(ui.q.value, 'typing'));
@@ -167,57 +211,106 @@ async function start() {
     ui.q.focus();
   });
 
-  root.addEventListener('click', e => {
-    const chip = e.target.closest('.keyword-chip');
-    if (chip) {
+  if (ui.tryRow) {
+    ui.tryRow.addEventListener('click', e => {
+      const chip = e.target.closest('.keyword-chip');
+      if (!chip) return;
       setQuery(chip.dataset.keyword || '', 'push');
-      return;
-    }
-    const btn = e.target.closest('[data-filter][data-value]');
-    if (btn) {
-      const facet = btn.dataset.filter;
-      const value = btn.dataset.value;
-      const set = new Set(state[facet]);
-      if (value === 'all') set.clear();
-      else if (set.has(value)) set.delete(value);
-      else set.add(value);
-      state[facet] = set;
-      update({ history: 'push' });
-    }
-  });
-
-  ui.sort.addEventListener('change', () => {
-    state.sort = ui.sort.value;
-    state.sortExplicit = true;
-    update({ history: 'push' });
-  });
-
-  if (ui.legacy) {
-    ui.legacy.addEventListener('change', () => {
-      state.showDeprecated = ui.legacy.checked;
-      update({ history: 'push' });
+      // The Try row hides once there is a query; keep focus in the search box.
+      ui.q.focus();
     });
   }
 
-  if (ui.reset) {
-    ui.reset.addEventListener('click', () => {
-      const keepSort = { sort: state.sort, sortExplicit: state.sortExplicit };
-      state = { ...stateMod.createState(), ...keepSort, fulltext: state.fulltext };
+  // ---- events: filters panel ----
+  ui.filters.addEventListener('change', e => {
+    const input = e.target;
+    if (!(input instanceof HTMLInputElement) || input.type !== 'checkbox') return;
+    if (input === ui.legacy) {
+      state.showDeprecated = input.checked;
+    } else if (match.FACETS.includes(input.name)) {
+      setFacet(input.name, input.value, input.checked);
+    } else {
+      return;
+    }
+    // Keep the package order while the user works inside the package list.
+    update({ history: 'push', freezePackages: !!(ui.packageOptions && ui.packageOptions.contains(input)) });
+  });
+
+  // Re-sort the package list (pin selected ones) whenever the panel opens.
+  ui.filters.addEventListener('toggle', () => {
+    if (ui.filters.open) update({ history: 'none' });
+  });
+
+  if (ui.packageFilter) {
+    ui.packageFilter.addEventListener('input', () => update({ history: 'none' }));
+    // Enter in the package box must not submit anything or toggle the panel.
+    ui.packageFilter.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  }
+
+  if (ui.resetFilters) {
+    ui.resetFilters.addEventListener('click', () => {
+      clearFacets();
+      state.showDeprecated = false;
+      if (ui.packageFilter) ui.packageFilter.value = '';
+      update({ history: 'push' });
+      ui.q.focus();
+    });
+  }
+
+  if (ui.showResults) {
+    ui.showResults.addEventListener('click', () => {
+      ui.filters.open = false;
+      if (ui.resultsHeading) {
+        ui.resultsHeading.focus({ preventScroll: true });
+        ui.resultsHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+
+  // ---- events: active chips ----
+  ui.activeChips.addEventListener('click', e => {
+    const chip = e.target.closest('.tl-chip');
+    if (!chip) return;
+    const chips = [...ui.activeChips.querySelectorAll('.tl-chip')];
+    const index = chips.indexOf(chip);
+    if (chip.dataset.facet === 'q') {
+      state.q = '';
+      scheduleFulltext();
+    } else {
+      setFacet(chip.dataset.facet, chip.dataset.value, false);
+    }
+    update({ history: 'push' });
+    // Focus the chip now at the same position, else the previous one, else search.
+    const after = [...ui.activeChips.querySelectorAll('.tl-chip')];
+    const next = after[index] || after[index - 1];
+    (next || ui.q).focus();
+  });
+
+  if (ui.clearAll) {
+    ui.clearAll.addEventListener('click', () => {
+      clearFacets();
+      state.q = '';
       scheduleFulltext();
       update({ history: 'push' });
       ui.q.focus();
     });
   }
 
-  if (ui.showAll) {
-    ui.showAll.addEventListener('click', () => {
-      const expanded = ui.showAll.getAttribute('aria-expanded') === 'true';
-      root.querySelectorAll('.package-extra').forEach(el => {
-        const selected = state.package.has(el.dataset.value);
-        el.classList.toggle('d-none', expanded && !selected);
-      });
-      ui.showAll.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-      ui.showAll.textContent = expanded ? `Show all (${ui.showAll.dataset.total})` : 'Show fewer';
+  // ---- events: sort, empty-state reset, history ----
+  ui.sort.addEventListener('change', () => {
+    state.sort = ui.sort.value;
+    state.sortExplicit = true;
+    update({ history: 'push' });
+  });
+
+  if (ui.reset) {
+    ui.reset.addEventListener('click', () => {
+      const keep = { sort: state.sort, sortExplicit: state.sortExplicit, fulltext: state.fulltext };
+      state = { ...stateMod.createState(), ...keep };
+      if (ui.packageFilter) ui.packageFilter.value = '';
+      scheduleFulltext();
+      update({ history: 'push' });
+      ui.q.focus();
     });
   }
 
@@ -229,7 +322,19 @@ async function start() {
     update({ history: 'none' });
   });
 
+  // The site footer is position: fixed; keep the mobile "Show N results"
+  // bar above it.
+  const siteFooter = document.querySelector('.footer');
+  const syncFooterHeight = () => {
+    const h = siteFooter && getComputedStyle(siteFooter).position === 'fixed' ? siteFooter.offsetHeight : 0;
+    root.style.setProperty('--tl-fixed-footer-h', h + 'px');
+  };
+  syncFooterHeight();
+  window.addEventListener('resize', syncFooterHeight);
+
   // ---- start ----
+  // Open the filters panel when the page was opened with filters in the URL.
+  if (stateMod.hasFacetFilters(state)) ui.filters.open = true;
   if (match.normaliseQuery(state.q).length >= FT_MIN_CHARS) fulltext.load();
   scheduleFulltext();
   update({ history: 'replace' });   // also rewrites legacy URLs to the canonical form

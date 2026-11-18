@@ -47,17 +47,20 @@ export function buildCatalogue(root) {
 }
 
 // Known option values per facet, for URL whitelisting and counts.
-// Workflow/domain/package come from the rendered filter buttons; BEAST
-// versions from the cards themselves.
-export function knownOptions(root, items) {
-  const fromButtons = facet => [...root.querySelectorAll(`[data-filter="${facet}"]`)]
-    .map(b => b.dataset.value)
-    .filter(v => v && v !== 'all');
-  const beast = [...new Set(items.map(i => i.beastPkg || 'none'))];
+// Workflow/domain/package come from the rendered checkboxes; BEAST versions
+// from the cards themselves, newest first, 'none' (not specified) last.
+export function knownOptions(root, items, versionKey) {
+  const fromInputs = facet => [...root.querySelectorAll('input[type="checkbox"][name]')]
+    .filter(input => input.name === facet)
+    .map(input => input.value)
+    .filter(Boolean);
+  const versions = [...new Set(items.map(i => i.beastPkg).filter(Boolean))]
+    .sort((a, b) => versionKey(b) - versionKey(a));
+  const beast = items.some(i => !i.beastPkg) ? [...versions, 'none'] : versions;
   return {
     beast,
-    workflow: fromButtons('workflow'),
-    domain: fromButtons('domain'),
-    package: [...new Set([...fromButtons('package'), ...items.flatMap(i => i.packages)])],
+    workflow: fromInputs('workflow'),
+    domain: fromInputs('domain'),
+    package: [...new Set([...fromInputs('package'), ...items.flatMap(i => i.packages)])],
   };
 }

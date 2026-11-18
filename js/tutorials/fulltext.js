@@ -1,7 +1,9 @@
 // Pagefind full-text search: lazy loading, stale-result guard, cache and
 // excerpt sanitising. No imports.
 
-const MAX_RESULTS = 50;
+// Above the size of the catalogue (one indexed page per tutorial), so no
+// matching tutorial is cut off before the slug check.
+const MAX_RESULTS = 100;
 const CACHE_SIZE = 30;
 
 // Slug of a tutorial's main page: /tutorials/<slug>/ or /tutorials/<slug>/index.html.
@@ -37,10 +39,12 @@ export function sanitiseExcerpt(html, doc = document) {
   return frag;
 }
 
-// createFulltext(url) -> { status, load(), search(q) }
+// createFulltext(url) -> { status, load(), cancel(), search(q) }
 // status: 'idle' | 'loading' | 'ready' | 'unavailable'
-// search(q) resolves to Map<slug, {rank, excerpt}>, or null when a newer
-// search (or cancel()) superseded it.
+// search(q) resolves to:
+//   { hits: Map<slug, {rank, excerpt}> }  results for q
+//   { error: true }                       loading or searching failed
+//   null                                  superseded by a newer search or cancel()
 export function createFulltext(url, knownSlugs) {
   let pagefind = null;
   let loading = null;
@@ -75,27 +79,29 @@ export function createFulltext(url, knownSlugs) {
     async search(q) {
       const mySeq = ++seq;
       if (cache.has(q)) {
-        const hit = cache.get(q);
+        const hits = cache.get(q);
         cache.delete(q);
-        cache.set(q, hit);
-        return hit;
+        cache.set(q, hits);
+        return { hits };
       }
       const ok = await api.load();
-      if (!ok || mySeq !== seq) return null;
+      if (mySeq !== seq) return null;
+      if (!ok) return { error: true };
 
       let found;
       try {
         found = await pagefind.search(q);
       } catch (e) {
-        return null;
+        return mySeq === seq ? { error: true } : null;
       }
-      if (mySeq !== seq || !found) return null;
+      if (mySeq !== seq) return null;
+      if (!found) return { error: true };
 
       let data;
       try {
         data = await Promise.all(found.results.slice(0, MAX_RESULTS).map(r => r.data()));
       } catch (e) {
-        return null;
+        return mySeq === seq ? { error: true } : null;
       }
       if (mySeq !== seq) return null;
 
@@ -109,7 +115,7 @@ export function createFulltext(url, knownSlugs) {
 
       cache.set(q, hits);
       if (cache.size > CACHE_SIZE) cache.delete(cache.keys().next().value);
-      return hits;
+      return { hits };
     },
   };
   return api;

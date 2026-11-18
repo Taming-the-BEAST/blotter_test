@@ -281,17 +281,9 @@ categories:
 			<div data-pagefind-weight="5" style="display:none;">{{ subtitle }}</div>
 			{% endif %}
 			{% comment %}
-			Pagefind filters, from the merged tutorial data so they match the listing cards.
+			No data-pagefind-filter tags: the listing filters on the client
+			(js/tutorials/match.js), so Pagefind is searched without filters.
 			{% endcomment %}
-			{% if tutorial.workflow %}
-			<span data-pagefind-filter="workflow" style="display:none;">{{ tutorial.workflow | escape }}</span>
-			{% endif %}
-			{% for package in tutorial.packages %}
-			<span data-pagefind-filter="package" style="display:none;">{{ package | escape }}</span>
-			{% endfor %}
-			{% for domain in tutorial.domains %}
-			<span data-pagefind-filter="domain" style="display:none;">{{ domain | escape }}</span>
-			{% endfor %}
 
 			<p>
 			{{ content }}

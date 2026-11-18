@@ -30,43 +30,6 @@ h6, .h6 { font-size: math.ceil($font-size-base * 0.85); }  /* ~12px */
 @import "bootstrap";
 
 
-/* Tutorial filter panel: label in a fixed left column, controls wrap beside it */
-.tutorial-index {
-    .filter-row {
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-    }
-
-    .filter-label {
-        flex: 0 0 6.5rem;
-        margin-bottom: 0;
-        text-align: right;
-    }
-
-    /* Lets the search input shrink inside its flex row instead of forcing overflow. */
-    .min-w-0 {
-        min-width: 0;
-    }
-
-    .filter-controls {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-
-    /* Stack labels above controls on narrow screens */
-    @media (max-width: 575.98px) {
-        .filter-row {
-            display: block;
-        }
-
-        .filter-label {
-            text-align: left;
-            margin-bottom: 0.25rem;
-        }
-    }
-}
-
 /* Container and layout spacing */
 .container {
     padding-left: 30px;

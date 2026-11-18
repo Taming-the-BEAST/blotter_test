@@ -9,14 +9,16 @@ categories:
 {% assign all_packages = site.data.tutorials | map: "packages" | compact | flatten | uniq | sort %}
 {% assign all_domains = site.data.tutorials | map: "domains" | compact | flatten | uniq | sort %}
 
-<div class="tutorial-index" data-pagefind-url="{{ '/pagefind/pagefind.js' | relative_url }}">
+<div class="tutorial-index" data-pagefind-url="{{ '/pagefind/pagefind.js' | relative_url }}" data-beast-current="{{ site.beast_current | escape }}">
+
+  <h1 class="visually-hidden">BEAST 2 tutorials</h1>
 
   <noscript>
     <p class="text-muted small">Enable JavaScript to search and filter the tutorials.</p>
   </noscript>
 
   <!-- Controls: hidden until the script has started (the page shows all tutorials without it). -->
-  <div class="bg-light p-3 rounded mb-3" id="tl-controls" hidden data-tl-control>
+  <div class="tl-controls mb-3" id="tl-controls" hidden data-tl-control>
 
     <!-- Search: one box for titles, tags and tutorial text -->
     <form class="tl-search mb-2" role="search" id="tl-search-form">
@@ -51,74 +53,112 @@ categories:
       {% endfor %}
     </div>
 
-    <!-- Workflow filter -->
-    <div class="filter-row mb-2">
-      <span class="form-label fw-semibold filter-label" id="tl-label-workflow">Workflow:</span>
-      <div class="filter-controls d-flex flex-wrap gap-1" role="group" aria-labelledby="tl-label-workflow">
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="all">All</button>
-        {% assign workflows = "Getting started|Basic workflow|Advanced analysis|Troubleshooting|Validation" | split: "|" %}
-        {% for wf in workflows %}
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="{{ wf }}">{{ wf }}</button>
-        {% endfor %}
-      </div>
-    </div>
+    <!-- Filters: collapsed by default; opened automatically when the URL has filters -->
+    <details class="tl-filters" id="tl-filters">
+      <summary class="tl-filters__summary">
+        <i class="bi bi-sliders" aria-hidden="true"></i>
+        <span>Filters</span>
+        <span class="badge rounded-pill text-bg-primary" id="tl-filter-count" aria-hidden="true" hidden></span>
+        <span class="visually-hidden" id="tl-filter-count-sr"></span>
+        <i class="bi bi-chevron-down tl-filters__chevron" aria-hidden="true"></i>
+      </summary>
 
-    <!-- Domain filter (dynamic) -->
-    {% if all_domains.size > 0 %}
-    <div class="filter-row mb-2">
-      <span class="form-label fw-semibold filter-label" id="tl-label-domain">Domain:</span>
-      <div class="filter-controls d-flex flex-wrap gap-1" role="group" aria-labelledby="tl-label-domain">
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="all">All</button>
-        {% for domain in all_domains %}
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain | escape }}">{{ domain | capitalize | escape }}</button>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
+      <div class="tl-filters__body">
+        <div class="tl-filters__grid">
 
-    <!-- Package filter: ranked by tutorial count when _data/popular_packages.yml exists,
-         otherwise alphabetical; top N shown, the rest behind "Show all". -->
-    {% assign ranked_packages = site.data.popular_packages | default: all_packages %}
-    {% if ranked_packages.size > 0 %}
-    {% assign max_packages = 5 %}
-    <div class="filter-row mb-2">
-      <span class="form-label fw-semibold filter-label" id="tl-label-package">Package:</span>
-      <div class="filter-controls d-flex flex-wrap gap-1" role="group" aria-labelledby="tl-label-package">
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="package" data-value="all">All</button>
-        {% for pkg in ranked_packages %}
-        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill{% if forloop.index0 >= max_packages %} package-extra d-none{% endif %}" data-filter="package" data-value="{{ pkg | escape }}">{{ pkg | escape }}</button>
-        {% endfor %}
-        {% if ranked_packages.size > max_packages %}
-        <button type="button" class="btn btn-sm rounded-pill border-0 text-secondary" id="package-show-all" aria-expanded="false" data-total="{{ ranked_packages.size }}">Show all ({{ ranked_packages.size }})</button>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
+          <!-- BEAST version: options are built by the script from the cards' data-beast-pkg -->
+          <fieldset class="tl-facet" data-facet="beast">
+            <legend class="tl-facet__legend">BEAST version</legend>
+            <p class="tl-facet__hint">Newest BEAST&nbsp;2 version the tutorial's packages are available for.</p>
+            <div class="tl-facet__options" id="tl-beast-options"></div>
+          </fieldset>
 
-    <!-- Deprecated toggle -->
-    <div class="form-check mb-0">
-      <input type="checkbox" class="form-check-input" id="show-legacy">
-      <label class="form-check-label" for="show-legacy">Show deprecated tutorials</label>
-    </div>
+          <fieldset class="tl-facet" data-facet="workflow">
+            <legend class="tl-facet__legend">Workflow</legend>
+            <div class="tl-facet__options">
+              {% assign workflows = "Getting started|Basic workflow|Advanced analysis|Troubleshooting|Validation" | split: "|" %}
+              {% for wf in workflows %}
+              <label class="form-check tl-opt">
+                <input class="form-check-input" type="checkbox" name="workflow" value="{{ wf | escape }}">
+                <span class="tl-opt__label">{{ wf | escape }}</span>
+                <span class="tl-count"><span class="visually-hidden">, </span><span data-n></span><span class="visually-hidden"> tutorials</span></span>
+              </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+
+          {% if all_domains.size > 0 %}
+          <fieldset class="tl-facet" data-facet="domain">
+            <legend class="tl-facet__legend">Domain</legend>
+            <div class="tl-facet__options">
+              {% for domain in all_domains %}
+              <label class="form-check tl-opt">
+                <input class="form-check-input" type="checkbox" name="domain" value="{{ domain | escape }}">
+                <span class="tl-opt__label">{{ domain | capitalize | escape }}</span>
+                <span class="tl-count"><span class="visually-hidden">, </span><span data-n></span><span class="visually-hidden"> tutorials</span></span>
+              </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+          {% endif %}
+
+          {% if all_packages.size > 0 %}
+          <fieldset class="tl-facet" data-facet="package">
+            <legend class="tl-facet__legend">Package</legend>
+            <input type="search" class="form-control form-control-sm tl-facet__filter" id="tl-package-filter"
+                   placeholder="Filter packages..." aria-label="Filter packages" autocomplete="off" spellcheck="false">
+            <div class="tl-facet__options tl-facet__options--scroll" id="tl-package-options">
+              {% for pkg in all_packages %}
+              <label class="form-check tl-opt">
+                <input class="form-check-input" type="checkbox" name="package" value="{{ pkg | escape }}">
+                <span class="tl-opt__label">{{ pkg | escape }}</span>
+                <span class="tl-count"><span class="visually-hidden">, </span><span data-n></span><span class="visually-hidden"> tutorials</span></span>
+              </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+          {% endif %}
+        </div>
+
+        <div class="tl-filters__footer">
+          <div class="form-check mb-0">
+            <input type="checkbox" class="form-check-input" id="show-legacy">
+            <label class="form-check-label" for="show-legacy">Include deprecated tutorials</label>
+          </div>
+          <button type="button" class="btn btn-link btn-sm ms-auto" id="tl-reset-filters">Reset filters</button>
+        </div>
+        <!-- Small screens only: stays at the bottom of the screen while the panel is scrolled -->
+        <button type="button" class="btn btn-primary btn-sm tl-filters__show" id="tl-show-results">Show results</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- Active filters as removable chips -->
+  <div class="tl-active mb-2" id="tl-active" hidden>
+    <span class="text-muted small">Active:</span>
+    <span class="tl-active__chips" id="tl-active-chips"></span>
+    <button type="button" class="btn btn-link btn-sm p-0" id="tl-clear-all">Clear all</button>
   </div>
 
   <!-- Result status and sort -->
   <div class="tl-statusbar d-flex flex-wrap align-items-center gap-2 mb-2">
     <div id="tl-status" class="text-muted small me-auto" role="status" aria-live="polite" aria-atomic="true">
-      {% if site.data.tutorials %}{{ site.data.tutorials | size }}{% else %}0{% endif %} tutorials
+      {% comment %} Without JavaScript only current (non-deprecated) tutorials are shown. {% endcomment %}
+      {% assign current_tuts = site.data.tutorials | where_exp: "t", "t.status != 'deprecated'" %}
+      {{ current_tuts | size }} {% if current_tuts.size == 1 %}tutorial{% else %}tutorials{% endif %}
     </div>
-    <div class="d-flex align-items-center gap-1" hidden data-tl-control>
+    <div class="tl-sort" hidden data-tl-control>
       <label for="tl-sort" class="text-muted small mb-0">Sort:</label>
       <select id="tl-sort" class="form-select form-select-sm w-auto">
         <option value="relevance">Relevance</option>
-        <option value="updated">Recently updated</option>
+        <option value="updated" selected>Recently updated</option>
         <option value="title">Title (A-Z)</option>
         <option value="beast">BEAST version (newest)</option>
       </select>
     </div>
   </div>
 
-  <h2 class="visually-hidden">Results</h2>
+  <h2 class="visually-hidden" id="tl-results-h" tabindex="-1">Results</h2>
 
   <!-- Tutorial Grid -->
   <div class="tutorial-grid" id="tutorial-grid">
