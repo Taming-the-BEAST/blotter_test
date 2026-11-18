@@ -10,9 +10,16 @@ export function versionKey(version) {
   return Number(m[1]) * 1000 + Number(m[2] || 0);
 }
 
-// Lowercase, collapse whitespace, split into tokens.
+// Lowercase and strip diacritics, so "Muller" or "Pecerska" find the
+// names written with an umlaut or caron. ("Mueller" is a different
+// spelling and is not folded.) catalogue.js folds the card text the same way.
+export function fold(text) {
+  return (text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+// Fold, collapse whitespace, split into tokens.
 export function tokenize(q) {
-  return (q || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+  return fold(q).trim().split(/\s+/).filter(Boolean);
 }
 
 export function normaliseQuery(q) {

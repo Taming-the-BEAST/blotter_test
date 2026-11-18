@@ -7,8 +7,10 @@ function list(value) {
   return (value || '').split(SEP).map(v => v.trim()).filter(Boolean);
 }
 
+// Lowercase without diacritics, matching match.js fold(): "Muller" finds
+// the name written with an umlaut.
 function lc(value) {
-  return (value || '').toLowerCase();
+  return (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
 // One item per `.tutorial-card` element.

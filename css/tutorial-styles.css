@@ -417,7 +417,7 @@
 
 .tl-facet__hint {
   font-size: 0.75rem;
-  color: #6c757d;
+  color: #5c636a;   /* 4.5:1 or more on the #f8f8f8 panel */
   margin-bottom: 0.35rem;
 }
 
@@ -459,7 +459,7 @@
 
 .tl-opt__extra {
   font-size: 0.7rem;
-  color: #6c757d;
+  color: #5c636a;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
   padding: 0 0.3rem;
@@ -472,8 +472,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Options that would currently show nothing: dimmed, still usable */
+/* Options that would currently show nothing: greyed text (still 4.5:1 on
+   the panel) and a faded checkbox; they stay usable. */
 .tl-opt.is-empty {
+  color: #5c636a;
+}
+
+.tl-opt.is-empty .form-check-input {
   opacity: 0.5;
 }
 
@@ -545,4 +550,29 @@
 
 .tl-filters__footer .form-check-label {
   font-size: 0.875rem;
+}
+
+/* Touch screens: at least 40px tall targets for options, chips and buttons */
+@media (pointer: coarse) {
+  .tl-opt {
+    min-height: 40px;
+  }
+
+  .tl-chip,
+  .keyword-chip,
+  .tl-filters__footer .btn,
+  #tl-clear-all {
+    min-height: 40px;
+  }
+
+  .tl-search__clear {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* Link buttons on the grey panel: the site red is just under 4.5:1 on
+   #f8f8f8, so use a slightly darker red there. */
+.tl-filters .btn-link {
+  color: #b62424;
 }

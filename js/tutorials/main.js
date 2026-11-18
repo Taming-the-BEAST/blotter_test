@@ -10,7 +10,7 @@ const v = new URL(import.meta.url).search;
 const FT_MIN_CHARS = 3;
 const FT_DEBOUNCE_MS = 250;
 const URL_TYPING_MS = 300;
-const STATUS_MS = 300;
+const STATUS_MS = 400;
 
 async function start() {
   const root = document.querySelector('.tutorial-index');

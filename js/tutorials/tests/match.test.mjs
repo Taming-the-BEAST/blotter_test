@@ -156,3 +156,7 @@ test('deprecated scope: counts and status follow the deprecated section', () => 
   assert.equal(d.summary.metaCount, 0);                          // deprecated match not counted while closed
   assert.equal(d.summary.deprecatedMatches, 1);
 });
+
+test('diacritics are folded in queries', () => {
+  assert.deepEqual(tokenize('M\u00fcller  Pe\u010derska'), ['muller', 'pecerska']);
+});
