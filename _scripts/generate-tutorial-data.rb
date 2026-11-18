@@ -62,18 +62,69 @@ module Tutorials
 		value.nil? || (value.respond_to?(:empty?) && value.empty?)
 	end
 
+	# A frontmatter field counts as defined when present and not nil or a
+	# blank string. An explicit empty list (`packages: []`) IS defined.
+	def self.defined_value?(header, field)
+		return false unless header.key?(field)
+		v = header[field]
+		!(v.nil? || (v.is_a?(String) && v.strip.empty?))
+	end
+
+	# Legacy frontmatter keys and the canonical key they map to. Resolved
+	# before the fallback merge, so an old-style README key (e.g.
+	# `beastversion`) still wins over the central fallback file.
+	ALIASES = {
+		"beastversion_tutorial" => ["beastversion"],
+		"workflow" => ["tutorial_type"],
+	}
+
+	SCHEMA_FILE = "tutorials/tutorial_schema.yml"
+
+	# Allowed workflow values. A legacy `tutorial_type` from the old
+	# vocabulary (Core / Model set-up / Applied) is not a valid workflow and
+	# must not override a curated fallback value.
+	def self.allowed_workflows
+		@allowed_workflows ||= begin
+			Array((YAML.load_file(SCHEMA_FILE) || {})["workflows"])
+		rescue StandardError
+			[]
+		end
+	end
+
+	def self.resolve_aliases(repo, tutorial_header)
+		header = tutorial_header.dup
+		ALIASES.each do |canonical, legacy_keys|
+			next if defined_value?(header, canonical)
+			legacy_keys.each do |legacy|
+				next unless defined_value?(header, legacy)
+				if canonical == "workflow" && !allowed_workflows.empty? &&
+					!allowed_workflows.include?(header[legacy])
+					puts "\t\tWARNING: #{repo} legacy '#{legacy}: #{header[legacy]}' is not a valid workflow - ignored"
+					break
+				end
+				header[canonical] = header[legacy]
+				puts "\t\tINFO: #{repo} uses legacy key '#{legacy}', treating it as '#{canonical}'"
+				break
+			end
+		end
+		header
+	end
+
 	# Field-by-field merge: a tutorial's own frontmatter always wins per
 	# field; only fields the tutorial does not define are filled in from the
-	# central fallback file. Warn when a tutorial already defines a field
-	# also present in the fallback file, since that fallback entry is now
-	# redundant and should be removed upstream.
+	# central fallback file. A field counts as defined when the key is present
+	# with a non-nil value, so an explicit empty list (`packages: []`) wins.
+	# Warn when a tutorial already defines a field also present in the
+	# fallback file, since that fallback entry is now redundant and should be
+	# removed upstream. Fallback keys are matched case-insensitively.
 	def self.merge_fallback_metadata(repo, tutorial_header, fallback_metadata)
-		fallback = fallback_metadata[repo]
+		fallback = fallback_metadata[repo] ||
+			fallback_metadata.find { |key, _| key.to_s.casecmp?(repo) }&.last
 		return tutorial_header unless fallback
 
 		merged = tutorial_header.dup
 		FALLBACK_FIELDS.each do |field|
-			own_present = !blank?(tutorial_header[field])
+			own_present = defined_value?(tutorial_header, field)
 			fallback_present = !blank?(fallback[field])
 
 			if own_present && fallback_present
@@ -129,13 +180,19 @@ module Tutorials
 
 				# load tutorial header metadata from README.md
 				# overwrite description with tutorial header description if not empty
-				tutorial_header = YAML.load_file("tutorials/#{reponame}/README.md",
+				readme = "tutorials/#{reponame}/README.md"
+				unless File.exist?(readme)
+					puts "\t\tWARNING: #{repo} has no #{readme} (clone failed?) - skipping"
+					next
+				end
+				tutorial_header = YAML.load_file(readme,
 					permitted_classes: [Date, Time], aliases: true)
 				# A README without parseable frontmatter yields nil/String, not a Hash.
 				unless tutorial_header.is_a?(Hash)
 					puts "\t\tWARNING: #{repo} README.md has no usable frontmatter - skipping"
 					next
 				end
+				tutorial_header = resolve_aliases(repo, tutorial_header)
 				tutorial_header = merge_fallback_metadata(repo, tutorial_header, fallback_metadata)
 
 				tutorial_level  = tutorial_header["level"]
@@ -143,13 +200,13 @@ module Tutorials
 				tutorial_author = tutorial_header["author"]
 				tutorial_beast  = tutorial_header["beastversion_tutorial"] || tutorial_header["beastversion"]
 				tutorial_beast_package = tutorial_header["beastversion_package"]
-				tutorial_workflow = tutorial_header["workflow"] || tutorial_header["tutorial_type"]
-				tutorial_packages = tutorial_header["packages"] || []
-				tutorial_keywords = tutorial_header["keywords"] || []
+				tutorial_workflow = tutorial_header["workflow"]   # legacy tutorial_type handled in resolve_aliases
+				tutorial_packages = Array(tutorial_header["packages"]).reject { |v| v.to_s.strip.empty? }
+				tutorial_keywords = Array(tutorial_header["keywords"]).reject { |v| v.to_s.strip.empty? }
 				tutorial_status = tutorial_header["status"]
 				tutorial_deprecated_reason = tutorial_header["deprecated_reason"]
 				tutorial_deprecated_alternative = tutorial_header["deprecated_alternative"]
-				tutorial_domains = tutorial_header["domains"] || []
+				tutorial_domains = Array(tutorial_header["domains"]).reject { |v| v.to_s.strip.empty? }
 				if (tutorial_header["subtitle"] != nil && tutorial_description != tutorial_header["subtitle"])
 				   tutorial_description = tutorial_header["subtitle"]
 				end
@@ -157,17 +214,17 @@ module Tutorials
 				# Get all pdfs in the root
 				pdf_array = Dir.glob("tutorials/#{reponame}/**/*.pdf").reject{ |f| f['/figures/']}
 
-				# Get data files 
-				data_array = Dir.glob("tutorials/#{reponame}/data/*").reject{ |f| f['index.md'] || f['README.mdown'] || f['README.md']}				
+				# Get data files (files only: directories have no raw download URL)
+				data_array = Dir.glob("tutorials/#{reponame}/data/*").select { |f| File.file?(f) }.reject{ |f| f['index.md'] || f['README.mdown'] || f['README.md']}
 
 				# Get xml files
 				xml_array = Dir.glob("tutorials/#{reponame}/xml/*.xml")
 
 				# Get scripts files
-				script_array = Dir.glob("tutorials/#{reponame}/scripts/*").reject{ |f| f['index.md'] || f['README.mdown'] || f['README.md']}				
+				script_array = Dir.glob("tutorials/#{reponame}/scripts/*").select { |f| File.file?(f) }.reject{ |f| f['index.md'] || f['README.mdown'] || f['README.md']}
 
 				# Get output files
-				out_array = Dir.glob("tutorials/#{reponame}/precooked_runs/*").reject{ |f| f['index.md'] || f['README.mdown'] || f['README.md']}				
+				out_array = Dir.glob("tutorials/#{reponame}/precooked_runs/*").select { |f| File.file?(f) }.reject{ |f| f['index.md'] || f['README.mdown'] || f['README.md']}
 
 				# load contributor metadata
 				octokit_contributors = client.contributors(repo)					
@@ -239,13 +296,18 @@ module Tutorials
 					"outputs" => out_array
 				)
 
-				# sort by date
-				tutorial_data.sort! { |x, y| y["commits"].first["date"] <=> x["commits"].first["date"] } 
-			
 				puts "\tDone (#{repo})"
 
 			end
 		end
+
+		# Sort by date of the latest commit, newest first. Done once after the
+		# loop; tutorials without commits sort last.
+		latest = lambda do |t|
+			d = (t["commits"] || []).first&.dig("date")
+			d.respond_to?(:to_time) ? d.to_time.utc : Time.at(0).utc
+		end
+		tutorial_data.sort_by! { |t| latest.(t) }.reverse!
 			
 		return tutorial_data
 			

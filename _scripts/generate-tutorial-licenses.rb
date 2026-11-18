@@ -1,69 +1,84 @@
 require 'yaml'
 require 'date'
 
-# collect all license files 
-licensearray = Dir.glob("tutorials/**/LICENSE*")
+# Turn each tutorial's top-level LICENSE / LICENSE.md into a LICENSE.md page
+# that Jekyll renders as tutorials/<name>/LICENSE.html.
+#
+# Safe to run repeatedly: the front matter is rewritten (not duplicated) and the
+# licence text is wrapped in exactly one code fence, however many fences earlier
+# runs left behind.
 
-# go through each markdown file
+FENCE = "```"
+
+# Only licences directly in a tutorial's root folder (tutorials/<name>/LICENSE*),
+# not ones bundled deeper inside data or script folders.
+licensearray = Dir.glob("tutorials/*/LICENSE*").reject { |f| f.end_with?(".html") }
+
 licensearray.each { |license|
-	
+
 	# if LICENSE, rename to LICENSE.md
 	# if LICENSE.html already exists, remove
-	if File.basename(license) =~ /LICENSE/i
-		if File.exist?(File.dirname(license) + "/LICENSE.html")
-			File.delete(File.dirname(license) + "/LICENSE.html")
+	dir = File.dirname(license)
+	if File.exist?(dir + "/LICENSE.html")
+		File.delete(dir + "/LICENSE.html")
+	end
+	licensemd = dir + "/LICENSE.md"
+	if license != licensemd
+		if File.exist?(licensemd) && !File.identical?(license, licensemd)
+			# Both LICENSE and LICENSE.md exist: keep LICENSE.md, ignore the other.
+			next
 		end
-		licensemd = File.dirname(license) + "/LICENSE.md"
-		File.rename(license, licensemd)
+		# Rename via a temporary name so a case-only rename (License.md ->
+		# LICENSE.md) also works on case-insensitive file systems (macOS).
+		tmp = licensemd + ".tmp-rename"
+		File.rename(license, tmp)
+		File.rename(tmp, licensemd)
 		license = licensemd
 	end
-	
-	# get tutorial name if possible
-	tutorial_name = nil
-	dirarray = File.dirname(license).split('/')
-	temp_name = dirarray[dirarray.index("tutorials") + 1]
-	if temp_name =~ /^[^_]/
-		tutorial_name = temp_name
-		title = license.sub(/^.*tutorials\//, '').sub(/.md$/, '').sub(/LICENSE$/, '')
+
+	# tutorial name: the folder directly under tutorials/
+	tutorial_name = File.basename(dir)
+	tutorial_name = nil unless tutorial_name =~ /^[^_]/
+	# Must not equal the tutorial's own title (the tutorial layout looks up its
+	# metadata by title), and reads well in the breadcrumb.
+	title = tutorial_name ? "#{tutorial_name}/License" : nil
+
+	contents = File.read(license)
+
+	# split off existing YAML front matter, if any
+	header = {}
+	if contents =~ /\A---\s*\n(.*?)\n---\s*\n/m
+		header = YAML.load($1, permitted_classes: [Date, Time], aliases: true) || {}
+		contents = $'
 	end
 
-	# if file is lacking YAML front matter, add some
-	contents = File.open(license, "r").read	
-	out = File.new(license, "w")	
-	#if contents !~ /^(---\s*\n.*?\n?)^(---\s*$\n?)/m
-	if contents !~ /\A---(.|\n)*?---/
-		out.puts "---"
-		out.puts "layout: tutorial"
-		if tutorial_name != nil
-			out.puts "title: #{title}"		
-			out.puts "tutorial: #{tutorial_name}"
-			out.puts "permalink: /:path/:basename:output_ext"
-		end
-		out.puts "---"
-		out.puts
-	else
-		pos = contents.enum_for(:scan, /\A---(.|\n)*?---/).map { Regexp.last_match.end(0) }
+	header["layout"] = "tutorial"
+	if tutorial_name != nil
+		header["title"] = title
+		header["tutorial"] = tutorial_name
+		header["permalink"] = "/:path/:basename:output_ext"
+	end
 
-		header   = YAML.load(contents[0..pos[0]], permitted_classes: [Date, Time], aliases: true)
-		contents = contents[pos[0]..-1]
+	# strip any code fences left by earlier runs, then wrap exactly once.
+	# Only blank lines are trimmed at the ends, so the indentation of the
+	# first licence line (e.g. a centred title) is kept.
+	trim = ->(s) { s.sub(/\A(?:[ \t]*\n)+/, '').rstrip }
+	body = trim.(contents)
+	loop do
+		stripped = trim.(body.sub(/\A#{FENCE}[^\n]*\n?/, '').sub(/\n?[ \t]*#{FENCE}\z/, ''))
+		break if stripped == body
+		body = stripped
+	end
 
-		if (tutorial_name != nil)
-			header["layout"] = "tutorial"
-			header["title"] = title
-			header["tutorial"] = tutorial_name
-			header["permalink"] = "/:path/:basename:output_ext"
-		end
+	# replace links that point to .md files with the equivalent .html file
+	body = body.gsub(/\((\S+)\.md\)/, "(\\1.html)")
 
+	File.open(license, "w") do |out|
 		out.puts YAML.dump(header)
 		out.puts "---"
 		out.puts
+		out.puts FENCE
+		out.puts body
+		out.puts FENCE
 	end
-	
-	# go through file and replace all links that point to .md files with the equivalent .html file
-	contents.gsub!(/\((\S+)\.md\)/, "(\\1.html)")
-	out.puts "```"
-	out.puts contents		
-	out.puts "```"
-	
 }
-

@@ -1,6 +1,14 @@
 name: Taming the BEAST
 description: BEAST2 tutorials for the community, by the community!
-url: https://taming-the-beast.org/
+# No trailing slash: templates build absolute links with the absolute_url filter.
+url: https://taming-the-beast.org
+
+# Keep the Pagefind index (built after jekyll) when jekyll rebuilds _site.
+# Setting keep_files replaces Jekyll's default list, so .git and .svn are repeated here.
+keep_files:
+  - .git
+  - .svn
+  - pagefind
 
 permalink: /:categories/:title/
 future: true
@@ -34,6 +42,9 @@ exclude:
   - "*.nexus"
   - "Gemfile"
   - "Gemfile.lock"
+  - "*.backup"
+  - "*.bib"
+  - "TUTORIALS_REDESIGN_PLAN.md"
   - "github.token"
   - "venv"
   - "venv/**"

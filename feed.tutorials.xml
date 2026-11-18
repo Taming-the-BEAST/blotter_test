@@ -5,58 +5,59 @@
 	<channel>
 		<title>{{ site.name | xml_escape }} - Tutorials</title>
 		<description>{{ site.description | xml_escape }} - Recently modified tutorials</description>
-		<link>{{ site.url }}/tutorials</link>
-		<atom:link href="{{ site.url }}feed.tutorials.xml" rel="self" type="application/rss+xml" />
+		<link>{{ '/tutorials/' | absolute_url }}</link>
+		<atom:link href="{{ '/feed.tutorials.xml' | absolute_url }}" rel="self" type="application/rss+xml" />
 		<image>
-			<url>{{ site.url }}/images/logo_bw.svg</url>
+			<url>{{ '/images/logo_bw.svg' | absolute_url }}</url>
 			<title>{{ site.name | xml_escape }}</title>
-			<link>{{ site.url }}/tutorials</link>
+			<link>{{ '/tutorials/' | absolute_url }}</link>
 		</image>
-		{% for tutorial in site.data.tutorials limit:25 %}		
+		{% for tutorial in site.data.tutorials limit:25 %}
+		{% comment %}
+		The description is HTML that feed readers render, so it is XML-escaped.
+		Third-party values (authors, commit messages, logins, URLs) are HTML-escaped
+		first and then XML-escaped with the rest, so '&' or '<' in a commit message
+		can neither break the XML nor inject markup.
+		{% endcomment %}
+		{% capture item_html %}
+			{{ tutorial.description | escape }}<br>
+			By
+			{% assign authors = tutorial.author | split: ',' %}
+			{% for author in authors %}
+				{% case forloop.index %}
+					{% when 1 %}
+						{{ author | strip | escape }}
+					{% when forloop.length %}
+						and {{ author | strip | escape }}
+					{% else %}
+						, {{ author | strip | escape }}
+				{% endcase %}
+			{% endfor %}
+			<br><br>
+			{% if tutorial.commits.first %}
+			Updated on
+			<a class='off' href='{{ tutorial.commits.first.url | escape }}'>{{ tutorial.commits.first.date | date: "%-d %b %Y" }}</a>
+			by
+			<a class='off' href='{{ tutorial.commits.first.author_url | escape }}'>{{ tutorial.commits.first.author_login | escape }}</a>:
+			{{ tutorial.commits.first.message | split: '
+' | first | escape }}
+			<br><br>
+			{% endif %}
+			{% if tutorial.workflow %}Workflow: {{ tutorial.workflow | escape }}<br>{% endif %}
+			{% assign bv = tutorial.beastversion_package | default: tutorial.beastversion_tutorial | default: tutorial.beastversion %}
+			{% if bv %}Requires: BEAST v{{ bv | escape }}{% endif %}
+		{% endcapture %}
 			<item>
 				<title>{{ tutorial.title | replace: '-', ' ' | xml_escape }}</title>
-				<description>
-					{{ tutorial.description | xml_escape }}
-					{{ "<br>" | xml_escape }}
-					By 
-					{% assign authors = tutorial.author | split: ',' %}
-					{% for author in authors %}
-						{% case forloop.index %}
-							{% when 1 %}
-								{{ author }}
-							{% when forloop.length - 1 %}
-								{% unless forloop.length == 1 %}
-									{{ author | prepend: 'and ' }}
-								{% endunless %}
-							{% else %}
-								{{ author | prepend: ', ' }}
-						{% endcase %}
-					{% endfor %}
-					{{ "<br><br>" | xml_escape }}
-					Updated on 
-					{{ "<a class='off' href=" | xml_escape }}
-						'{{ tutorial.commits.first.url }}'
-					{{ ">" | xml_escape }}
-						{{ tutorial.commits.first.date | date: "%-d %b %Y" }}
-					{{ "</a>" | xml_escape }}
-					by
-					{{ "<a class='off' href=" | xml_escape }}
-						'{{ tutorial.commits.first.author_url }}'
-					{{ ">" | xml_escape }}
-						{{ tutorial.commits.first.author_login }}
-					{{ "</a>" | xml_escape }}
-					: {{ tutorial.commits.first.message }}
-					{{ "<br><br>" | xml_escape }}
-					Level: {{ tutorial.level }}
-					{% if tutorial.beastversion %}
-						{{ "<br>" | xml_escape }}
-						Requires: BEAST v{{ tutorial.beastversion }}
-					{% endif %}
-				</description>
+				<description>{{ item_html | strip | xml_escape }}</description>
+				{% if tutorial.commits.first.date %}
 				<pubDate>{{ tutorial.commits.first.date | date: "%a, %d %b %Y %H:%M:%S %z" }}</pubDate>
-				<category>{{ tutorial.level }}</category>
-				<link>{{ site.url }}{{ tutorial.url }}</link>
-				<guid isPermaLink="true">{{ site.url }}{{ tutorial.url }}</guid>
+				{% endif %}
+				{% if tutorial.workflow %}
+				<category>{{ tutorial.workflow | xml_escape }}</category>
+				{% endif %}
+				<link>{{ tutorial.url | absolute_url }}</link>
+				<guid isPermaLink="true">{{ tutorial.url | absolute_url }}</guid>
 			</item>
 		{% endfor %}
 	</channel>

@@ -5,20 +5,20 @@
 	<channel>
 		<title>{{ site.name | xml_escape }} - News</title>
 		<description>{{ site.description | xml_escape }}</description>
-		<link>{{ site.url }}</link>
-		<atom:link href="{{ site.url }}feed.news.xml" rel="self" type="application/rss+xml" />
+		<link>{{ '/' | absolute_url }}</link>
+		<atom:link href="{{ '/feed.news.xml' | absolute_url }}" rel="self" type="application/rss+xml" />
 		<image>
-			<url>{{ site.url }}/images/logo_bw.svg</url>
+			<url>{{ '/images/logo_bw.svg' | absolute_url }}</url>
 			<title>{{ site.name | xml_escape }}</title>
-			<link>{{ site.url }}/tutorials</link>
+			<link>{{ '/tutorials/' | absolute_url }}</link>
 		</image>
 		{% for post in site.categories.news limit:25 %}
 			<item>
 				<title>{{ post.title | xml_escape }}</title>
 				<description>{{ post.content | xml_escape }}</description>
 				<pubDate>{{ post.date | date: "%a, %d %b %Y %H:%M:%S %z" }}</pubDate>
-				<link>{{ site.url }}{{ post.url }}</link>
-				<guid isPermaLink="true">{{ site.url }}{{ post.url }}</guid>
+				<link>{{ post.url | absolute_url }}</link>
+				<guid isPermaLink="true">{{ post.url | absolute_url }}</guid>
 			</item>
 		{% endfor %}
 	</channel>

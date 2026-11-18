@@ -15,15 +15,23 @@ class TutorialMetadataValidator
     @warnings = []
   end
   
+  # Legacy keys accepted in place of the canonical one (with a warning).
+  LEGACY_ALIASES = {
+    'beastversion_tutorial' => 'beastversion',
+    'workflow' => 'tutorial_type',
+  }.freeze
+
   def validate(tutorial_frontmatter)
     @errors = []
     @warnings = []
 
+    tutorial_frontmatter = apply_legacy_aliases(tutorial_frontmatter || {})
     validate_required_fields(tutorial_frontmatter)
     validate_workflow(tutorial_frontmatter)
     validate_status(tutorial_frontmatter)
     validate_keywords(tutorial_frontmatter)
     validate_packages(tutorial_frontmatter)
+    validate_domains(tutorial_frontmatter)
     validate_legacy_fields(tutorial_frontmatter)
     check_recommended_fields(tutorial_frontmatter)
 
@@ -35,9 +43,38 @@ class TutorialMetadataValidator
   end
   
   private
-  
+
+  # Schema sections may be missing; treat them as empty instead of crashing.
+  def schema_list(key)
+    Array(@schema[key])
+  end
+
+  def apply_legacy_aliases(frontmatter)
+    fm = frontmatter.dup
+    LEGACY_ALIASES.each do |canonical, legacy|
+      next if fm.key?(canonical) || !fm.key?(legacy)
+      fm[canonical] = fm[legacy]
+      @warnings << "Legacy field '#{legacy}' used; rename it to '#{canonical}'"
+    end
+    fm
+  end
+
+  def validate_domains(frontmatter)
+    domains = frontmatter['domains']
+    return if domains.nil?
+    unless domains.is_a?(Array)
+      @errors << "Domains must be a list"
+      return
+    end
+    allowed = schema_list('domains')
+    unknown = domains.reject { |d| allowed.include?(d) }
+    if unknown.any?
+      @errors << "Unknown domain(s): #{unknown.join(', ')}. Must be one of: #{allowed.join(', ')}"
+    end
+  end
+
   def validate_required_fields(frontmatter)
-    @schema['required_fields'].each do |field|
+    schema_list('required_fields').each do |field|
       unless frontmatter.key?(field) && !frontmatter[field].to_s.strip.empty?
         @errors << "Missing required field: #{field}"
       end
@@ -46,8 +83,8 @@ class TutorialMetadataValidator
   
   def validate_workflow(frontmatter)
     if frontmatter['workflow']
-      unless @schema['workflows'].include?(frontmatter['workflow'])
-        @errors << "Invalid workflow '#{frontmatter['workflow']}'. Must be one of: #{@schema['workflows'].join(', ')}"
+      unless schema_list('workflows').include?(frontmatter['workflow'])
+        @errors << "Invalid workflow '#{frontmatter['workflow']}'. Must be one of: #{schema_list('workflows').join(', ')}"
       end
     else
       @warnings << "Required field 'workflow' is missing"
@@ -56,8 +93,8 @@ class TutorialMetadataValidator
   
   def validate_status(frontmatter)
     if frontmatter['status']
-      unless @schema['status_values'].include?(frontmatter['status'])
-        @errors << "Invalid status '#{frontmatter['status']}'. Must be one of: #{@schema['status_values'].join(', ')}"
+      unless schema_list('status_values').include?(frontmatter['status'])
+        @errors << "Invalid status '#{frontmatter['status']}'. Must be one of: #{schema_list('status_values').join(', ')}"
       end
     else
       @warnings << "Recommended field 'status' is missing (defaulting to 'current')"
@@ -73,18 +110,18 @@ class TutorialMetadataValidator
         return
       end
       
-      rules = @schema['validation_rules']['keywords']
+      rules = (@schema['validation_rules'] || {})['keywords'] || {}
       
-      if keywords.length < rules['min']
+      if rules['min'] && keywords.length < rules['min']
         @warnings << "Only #{keywords.length} keywords provided. Recommended minimum: #{rules['min']}"
       end
       
-      if keywords.length > rules['max']
+      if rules['max'] && keywords.length > rules['max']
         @warnings << "#{keywords.length} keywords provided. Recommended maximum: #{rules['max']}"
       end
       
       # Check if keywords are from recommended taxonomy
-      all_keywords = collect_all_keywords(@schema['keyword_taxonomy'])
+      all_keywords = collect_all_keywords(@schema['keyword_taxonomy'] || {})
       unknown_keywords = keywords - all_keywords
       
       if unknown_keywords.any?
@@ -104,14 +141,14 @@ class TutorialMetadataValidator
         return
       end
       
-      rules = @schema['validation_rules']['packages']
+      rules = (@schema['validation_rules'] || {})['packages'] || {}
       
-      if packages.length > rules['max']
+      if rules['max'] && packages.length > rules['max']
         @warnings << "#{packages.length} packages listed. Consider limiting to #{rules['max']} most important packages."
       end
       
       # Check if packages are known
-      unknown_packages = packages - @schema['packages']
+      unknown_packages = packages - schema_list('packages')
       
       if unknown_packages.any?
         @warnings << "Unknown packages detected: #{unknown_packages.join(', ')}. If these are valid BEAST2 packages, please add them to the schema."
@@ -132,7 +169,7 @@ class TutorialMetadataValidator
   end
   
   def check_recommended_fields(frontmatter)
-    @schema['recommended_fields'].each do |field|
+    schema_list('recommended_fields').each do |field|
       unless frontmatter.key?(field)
         @warnings << "Recommended field '#{field}' is missing"
       end
@@ -174,7 +211,8 @@ if __FILE__ == $0
     exit 1
   end
   
-  schema_file = options[:schema] || '_data/tutorial_schema.yml'
+  # tutorials/tutorial_schema.yml is the tracked schema; _data/ is generated and gitignored.
+  schema_file = options[:schema] || 'tutorials/tutorial_schema.yml'
   tutorial_file = ARGV[0]
   
   # Extract frontmatter from tutorial file

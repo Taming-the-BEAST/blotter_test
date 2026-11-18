@@ -14,20 +14,12 @@ categories:
 	<div class="hidden-xs hidden-sm col-md-12">
 		<div class="bigtitle titlebox">
 			<ol class="breadcrumb">
-			{% assign crumbs = page.title | breadcrumb_array %}
-			{% for crumb in crumbs %}
-				{% assign name = crumb | split: '/' | last %}
-				{% for page in site.pages %}			
-					{% if page.title == crumb %}
-						{% assign url = page.url %}
-					{% endif %}
-				{% endfor %}
-				{% if crumb == page.title %}
-				<li><a class="off" href="{{ url | replace: 'index.html', '' }}">{{ name | replace: '-', ' ' }}</a></li>
-				{% else %}
-				<li><a class="off" href="{{ url | replace: 'index.html', '' }}">{{ name }}</a></li>
-				{% endif %}
-			{% endfor %}
+			{% comment %}
+			Link to this page itself. The old loop looked the URL up by title in
+			site.pages and could pick a README.md.backup page with the same title.
+			{% endcomment %}
+			{% assign crumb_name = page.title | split: '/' | last | replace: '-', ' ' %}
+			<li><a class="off" href="{{ page.url | replace: 'index.html', '' | relative_url }}">{{ crumb_name }}</a></li>
 			</ol>
 		</div>
 		<p>
@@ -52,16 +44,16 @@ categories:
 		</div>
 
 		<!-- Deprecated warning -->
-		{% if page.status == 'deprecated' %}
+		{% if tutorial.status == 'deprecated' %}
 		<div class="alert alert-secondary" style="padding: 15px; margin: 20px 0; border-radius: 6px; border-left: 4px solid #999; background: #f0f0f0; color: #555;">
 			<strong>⚠️ Deprecated Tutorial:</strong>
-			{% if page.deprecated_reason %}
-			{{ page.deprecated_reason }}
+			{% if tutorial.deprecated_reason %}
+			{{ tutorial.deprecated_reason | escape }}
 			{% else %}
 			This tutorial is deprecated and may be outdated.
 			{% endif %}
-			{% if page.deprecated_alternative %}
-			<br><a href="{{ page.deprecated_alternative }}">View recommended alternative →</a>
+			{% if tutorial.deprecated_alternative %}
+			<br><a href="{{ tutorial.deprecated_alternative | relative_url }}">View recommended alternative →</a>
 			{% endif %}
 		</div>
 		{% endif %}
@@ -93,12 +85,12 @@ categories:
 		{% endif %}
 
 		<!-- Keywords -->
-		{% if page.keywords.size > 0 %}
+		{% if tutorial.keywords.size > 0 %}
 		<div class="smallnote" style="margin-top: 10px;">
 			<strong>Keywords:</strong>
-			{% for keyword in page.keywords %}
+			{% for keyword in tutorial.keywords %}
 			<span class="tag tag-keyword" style="background: #e9ecef; padding: 3px 6px; margin-right: 4px; border-radius: 3px; font-size: 10px;">
-				{{ keyword }}
+				{{ keyword | escape }}
 			</span>
 			{% endfor %}
 		</div>
@@ -130,12 +122,17 @@ categories:
 				<a class="off" href="https://github.com/{{ tutorial.repo }}" target="_blank">Github repository</a>
 			</li>
 			<div class="smallspacer"></div>
+			{% comment %} Only link the licence when a LICENSE page was generated for this tutorial. {% endcomment %}
+			{% assign license_url = page.dir | append: 'LICENSE.html' %}
+			{% assign license_page = site.pages | where: 'url', license_url | first %}
+			{% if license_page %}
 			<li>
 				<i class="bi bi-star"></i>
-				<a class="off" href="LICENSE.html">
+				<a class="off" href="{{ license_url | relative_url }}">
 				License</a>
 			</li>
 			<div class="smallspacer"></div>
+			{% endif %}
 			<li>			
 				<i class="bi bi-bar-chart"></i>
 				<a class="off" href="https://github.com/{{ tutorial.repo }}/graphs/traffic" target="_blank">
@@ -236,9 +233,9 @@ categories:
 			<div class="smallspacer"></div>				
 			<div>
 				<a class="off" href="{{ contributor.url }}">
-    			<img class="pull-left avatar" src="{{ contributor.avatar }}">
+    			<img class="pull-left avatar" src="{{ contributor.avatar }}" alt="">
     			<div class="handlebox" style="padding-left:5px;">
-    				{{ contributor.login }}
+    				{{ contributor.login | escape }}
     			</div>
  				</a>
  			</div>			
@@ -255,7 +252,7 @@ categories:
 				<li> 
 					<i class="bi bi-check-square"></i>
 					<a class="off" href="{{ commit.url }}">
-					{{ commit.date | date_to_string }} - <span class="text-gray">{{ commit.message }}</span>
+					{{ commit.date | date_to_string }} - <span class="text-gray">{{ commit.message | escape }}</span>
 					</a> 
 				</li>
 			{% endfor %}
@@ -266,36 +263,45 @@ categories:
 	</div>
 
 	<div class="col-md-8">
-		<div class="post" data-pagefind-body>
+		{% comment %}
+		Only the main tutorial page (one with an entry in _data/tutorials.yml) is
+		indexed. LICENSE and other secondary pages that reuse this layout are not.
+		{% endcomment %}
+		<div class="post" {% if tutorial %}data-pagefind-body{% else %}data-pagefind-ignore="all"{% endif %}>
 			<!-- Pagefind meta and filter tags -->
 			<!-- Weighted so a title/keyword/subtitle hit outranks a body-text hit.
 			     Pagefind default weight is 1; headings inside {{ content }} are
 			     auto-weighted by level (h1 highest), so only these need boosting. -->
 			<h1 data-pagefind-meta="title" data-pagefind-weight="10" style="display:none;">{{ page.title }}</h1>
-			{% if page.keywords.size > 0 %}
-			<div data-pagefind-weight="7" style="display:none;">{{ page.keywords | join: ' ' }}</div>
+			{% if tutorial.keywords.size > 0 %}
+			<div data-pagefind-weight="7" style="display:none;">{{ tutorial.keywords | join: ' ' | escape }}</div>
 			{% endif %}
 			{% assign subtitle = tutorial.description | default: page.subtitle %}
 			{% if subtitle %}
 			<div data-pagefind-weight="5" style="display:none;">{{ subtitle }}</div>
 			{% endif %}
-			{% if page.workflow %}
-			<span data-pagefind-filter="workflow" style="display:none;">{{ page.workflow }}</span>
+			{% comment %}
+			Pagefind filters, from the merged tutorial data so they match the listing cards.
+			{% endcomment %}
+			{% if tutorial.workflow %}
+			<span data-pagefind-filter="workflow" style="display:none;">{{ tutorial.workflow | escape }}</span>
 			{% endif %}
-			{% for package in page.packages %}
-			<span data-pagefind-filter="package" style="display:none;">{{ package }}</span>
+			{% for package in tutorial.packages %}
+			<span data-pagefind-filter="package" style="display:none;">{{ package | escape }}</span>
 			{% endfor %}
-			{% for domain in page.domains %}
-			<span data-pagefind-filter="domain" style="display:none;">{{ domain }}</span>
+			{% for domain in tutorial.domains %}
+			<span data-pagefind-filter="domain" style="display:none;">{{ domain | escape }}</span>
 			{% endfor %}
 
 			<p>
 			{{ content }}
 
+			<div data-pagefind-ignore>
 			<hr>
 			<h1>Citation</h1>
 
-			{% include citation.html %} 
+			{% include citation.html %}
+			</div>
 		</div>
 	</div>			
 	<div class="col-md-1"></div>
