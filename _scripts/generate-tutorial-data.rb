@@ -62,6 +62,62 @@ module Tutorials
 		value.nil? || (value.respond_to?(:empty?) && value.empty?)
 	end
 
+	# Normalise a BEAST version value to "major.minor" ("2.7.x", "2.7.7",
+	# ">= 2.7", "v2.7" -> "2.7"). Returns nil for missing or unparsable values.
+	# Versions should be quoted in YAML: an unquoted 2.10 is read as the Float
+	# 2.1 and cannot be recovered, so Floats are reported.
+	def self.normalise_minor(value, repo = nil, field = nil)
+		return nil if value.nil?
+		if value.is_a?(Float)
+			puts "\t\tWARNING: #{repo} #{field}: #{value} is unquoted - quote it (an unquoted 2.10 would be read as 2.1)"
+		end
+		s = value.to_s.strip.sub(/\A(>=|<=|>|<|~>?|\^|=)\s*/, '').sub(/\Av/i, '')
+		return nil if s.empty?
+		m = s.match(/\A(\d+)\.(\d+)/)
+		unless m
+			puts "\t\tWARNING: #{repo} #{field}: cannot parse version '#{value}'"
+			return nil
+		end
+		"#{m[1].to_i}.#{m[2].to_i}"
+	end
+
+	# Package and domain vocabularies from the schema, for canonical spelling.
+	def self.schema
+		@schema ||= begin
+			YAML.load_file(SCHEMA_FILE) || {}
+		rescue StandardError => e
+			puts "WARNING: cannot read #{SCHEMA_FILE}: #{e.message}"
+			{}
+		end
+	end
+
+	# Rewrite package names to the schema's spelling, matching
+	# case-insensitively ("StarBeast3" -> "starbeast3"), so the listing has
+	# one filter option per package. Unknown names are kept and reported.
+	def self.canonical_packages(repo, packages)
+		known = Array(schema["packages"]).map(&:to_s)
+		by_lower = known.each_with_object({}) { |name, h| h[name.downcase] = name }
+		packages.map do |pkg|
+			name = pkg.to_s.strip
+			canonical = by_lower[name.downcase]
+			if canonical.nil?
+				puts "\t\tWARNING: #{repo} package '#{name}' is not in #{SCHEMA_FILE}" unless known.empty?
+				name
+			else
+				puts "\t\tWARNING: #{repo} package '#{name}' -> '#{canonical}' (schema spelling)" if canonical != name
+				canonical
+			end
+		end.uniq
+	end
+
+	def self.check_domains(repo, domains)
+		known = Array(schema["domains"]).map(&:to_s)
+		return if known.empty?
+		domains.each do |d|
+			puts "\t\tWARNING: #{repo} domain '#{d}' is not in #{SCHEMA_FILE}" unless known.include?(d.to_s)
+		end
+	end
+
 	# A frontmatter field counts as defined when present and not nil or a
 	# blank string. An explicit empty list (`packages: []`) IS defined.
 	def self.defined_value?(header, field)
@@ -84,11 +140,7 @@ module Tutorials
 	# vocabulary (Core / Model set-up / Applied) is not a valid workflow and
 	# must not override a curated fallback value.
 	def self.allowed_workflows
-		@allowed_workflows ||= begin
-			Array((YAML.load_file(SCHEMA_FILE) || {})["workflows"])
-		rescue StandardError
-			[]
-		end
+		@allowed_workflows ||= Array(schema["workflows"])
 	end
 
 	def self.resolve_aliases(repo, tutorial_header)
@@ -200,13 +252,16 @@ module Tutorials
 				tutorial_author = tutorial_header["author"]
 				tutorial_beast  = tutorial_header["beastversion_tutorial"] || tutorial_header["beastversion"]
 				tutorial_beast_package = tutorial_header["beastversion_package"]
+				tutorial_beast_minor = normalise_minor(tutorial_beast, repo, "beastversion_tutorial")
+				tutorial_beast_package_minor = normalise_minor(tutorial_beast_package, repo, "beastversion_package")
 				tutorial_workflow = tutorial_header["workflow"]   # legacy tutorial_type handled in resolve_aliases
-				tutorial_packages = Array(tutorial_header["packages"]).reject { |v| v.to_s.strip.empty? }
+				tutorial_packages = canonical_packages(repo, Array(tutorial_header["packages"]).reject { |v| v.to_s.strip.empty? })
 				tutorial_keywords = Array(tutorial_header["keywords"]).reject { |v| v.to_s.strip.empty? }
 				tutorial_status = tutorial_header["status"]
 				tutorial_deprecated_reason = tutorial_header["deprecated_reason"]
 				tutorial_deprecated_alternative = tutorial_header["deprecated_alternative"]
 				tutorial_domains = Array(tutorial_header["domains"]).reject { |v| v.to_s.strip.empty? }
+				check_domains(repo, tutorial_domains)
 				if (tutorial_header["subtitle"] != nil && tutorial_description != tutorial_header["subtitle"])
 				   tutorial_description = tutorial_header["subtitle"]
 				end
@@ -280,6 +335,13 @@ module Tutorials
 					"level" => tutorial_level,
 					"beastversion_tutorial" => tutorial_beast,
 					"beastversion_package" => tutorial_beast_package,
+					# Derived fields for the tutorial listing:
+					# beast_package_minor drives the BEAST version filter, sort and badge;
+					# beast_minor (tested-with version) is informational only.
+					"beast_package_minor" => tutorial_beast_package_minor,
+					"beast_minor" => tutorial_beast_minor,
+					"slug" => reponame,
+					"updated" => (tutorial_commits.first && tutorial_commits.first["date"].respond_to?(:strftime)) ? tutorial_commits.first["date"].strftime("%Y-%m-%d") : nil,
 					"workflow" => tutorial_workflow,
 					"packages" => tutorial_packages,
 					"keywords" => tutorial_keywords,
@@ -309,6 +371,13 @@ module Tutorials
 		end
 		tutorial_data.sort_by! { |t| latest.(t) }.reverse!
 			
+		missing = tutorial_data.select { |t| t["beast_package_minor"].nil? }.map { |t| t["repo"] }
+		unless missing.empty?
+			puts "INFO: #{missing.size} of #{tutorial_data.size} tutorials have no beastversion_package " \
+				"(shown as 'Not specified' in the BEAST version filter):"
+			missing.each { |r| puts "\t#{r}" }
+		end
+
 		return tutorial_data
 			
 	end

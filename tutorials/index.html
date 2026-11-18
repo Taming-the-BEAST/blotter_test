@@ -147,7 +147,19 @@ categories:
     {% endcomment %}
     {% assign beast_raw = tut.beastversion_tutorial | default: tut.beastversion | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
     {% assign beast_display = beast_raw | split: "." | slice: 0, 2 | join: "." %}
+    {% comment %}
+    BEAST version filter data: beast_package_minor from the generator, with a
+    Liquid fallback for older _data/tutorials.yml files that lack it.
+    {% endcomment %}
+    {% assign beast_pkg = tut.beast_package_minor %}
+    {% if beast_pkg == nil or beast_pkg == "" %}
+      {% assign beast_pkg_raw = tut.beastversion_package | append: "" | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
+      {% assign beast_pkg = beast_pkg_raw | split: "." | slice: 0, 2 | join: "." %}
+    {% endif %}
+    {% assign slug = tut.slug | default: tut.url | split: "/" | last %}
     <div class="card tutorial-card {% if tut.status == 'deprecated' %}tutorial-card--legacy{% endif %}"
+         data-slug="{{ slug | escape }}"
+         data-beast-pkg="{{ beast_pkg | escape }}"
          data-workflow="{{ tut.workflow }}"
          data-packages="{{ tut.packages | join: ',' }}"
          data-domains="{{ tut.domains | join: ',' }}"

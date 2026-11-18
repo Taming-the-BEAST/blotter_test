@@ -33,6 +33,7 @@ class TutorialMetadataValidator
     validate_packages(tutorial_frontmatter)
     validate_domains(tutorial_frontmatter)
     validate_legacy_fields(tutorial_frontmatter)
+    validate_versions(tutorial_frontmatter)
     check_recommended_fields(tutorial_frontmatter)
 
     {
@@ -156,6 +157,26 @@ class TutorialMetadataValidator
     end
   end
   
+  # BEAST versions: quoted strings like '2.7', '2.7.x' or '2.7.7'.
+  VERSION_FIELDS = %w[beastversion_tutorial beastversion_package].freeze
+
+  def validate_versions(frontmatter)
+    VERSION_FIELDS.each do |field|
+      next unless frontmatter.key?(field) && !frontmatter[field].nil?
+      v = frontmatter[field]
+      if v.is_a?(Float) || v.is_a?(Integer)
+        @warnings << "#{field}: #{v} is unquoted; write it as '#{v}' (an unquoted 2.10 is read as 2.1)"
+        next
+      end
+      s = v.to_s.strip
+      if s =~ /\A(>=|<=|>|<|~|\^)/
+        @warnings << "#{field}: '#{s}' is a range; use the concrete version (e.g. '2.7')"
+      elsif s !~ /\A\d+\.\d+(\.(\d+|x))?\z/
+        @errors << "#{field}: '#{s}' is not a version like '2.7', '2.7.x' or '2.7.7'"
+      end
+    end
+  end
+
   def validate_legacy_fields(frontmatter)
     if frontmatter['status'] == 'deprecated'
       unless frontmatter['deprecated_reason'] && !frontmatter['deprecated_reason'].to_s.strip.empty?

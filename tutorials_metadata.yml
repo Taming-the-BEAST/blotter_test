@@ -437,7 +437,7 @@ taming-the-beast/Substitution-model-averaging:
   packages:
   - bModelTest
 laduplessis/TiDeTree-Tutorial:
-  beastversion_tutorial: '>= 2.7'
+  beastversion_tutorial: '2.7'
   workflow: Advanced analysis
   status: current
   keywords:
