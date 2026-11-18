@@ -349,8 +349,8 @@ async function start() {
     update({ history: 'none' });
   });
 
-  // The site footer is position: fixed; keep the mobile "Show N results"
-  // bar above it.
+  // Keep the mobile "Show N results" button above the site footer when the
+  // footer is position: fixed (it is static on small screens, see style.scss).
   const siteFooter = document.querySelector('.footer');
   const syncFooterHeight = () => {
     const h = siteFooter && getComputedStyle(siteFooter).position === 'fixed' ? siteFooter.offsetHeight : 0;

@@ -112,8 +112,15 @@ a:hover {
 	   fit without horizontal scrolling. */
 	font-size: clamp(1.6rem, 9vw, 50px);
 	font-weight: 100;
-	white-space: normal;
-	min-width: 0;
+}
+
+/* Below the expanded navbar breakpoint the brand may wrap instead of
+   overflowing; on desktop it stays on one line as before. */
+@media (max-width: 991.98px) {
+	.navbar-brand {
+		white-space: normal;
+		min-width: 0;
+	}
 }
 .navbar-nav { 
 	font-size: 30px; 
@@ -436,6 +443,36 @@ figcaption {
 
   .footerspacer {
     height: 2rem;
+  }
+
+  /* Short pages: fill the screen so the footer still sits at the bottom. */
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body > .container {
+    flex: 1 0 auto;
+    width: 100%;
+  }
+
+  /* Member and post pages: photo above the text instead of beside it. */
+  .media {
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+  }
+
+  .media .titlebox {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  /* Large page titles scale down so long words fit */
+  .bigtitle {
+    font-size: clamp(2rem, 11vw, 60px);
+    line-height: 1.1;
   }
 }
 

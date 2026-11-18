@@ -569,6 +569,11 @@
     min-width: 40px;
     min-height: 40px;
   }
+
+  /* Keep the typed text clear of the larger clear button */
+  .tl-search__box .form-control {
+    padding-right: calc(40px + 0.75rem);
+  }
 }
 
 /* Link buttons on the grey panel: the site red is just under 4.5:1 on

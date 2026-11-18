@@ -22,8 +22,11 @@ export function tokenize(q) {
   return fold(q).trim().split(/\s+/).filter(Boolean);
 }
 
+// Key for full-text search and its cache: lowercase, whitespace collapsed,
+// diacritics KEPT. Pagefind matches diacritics itself and ranks exact
+// spellings first, so folding here would only hurt its ranking.
 export function normaliseQuery(q) {
-  return tokenize(q).join(' ');
+  return (q || '').toLowerCase().trim().split(/\s+/).filter(Boolean).join(' ');
 }
 
 // Metadata match score for one item, or -1 when not every token matches.
