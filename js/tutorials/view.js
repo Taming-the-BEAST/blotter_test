@@ -163,7 +163,8 @@ export function render(ui, items, state, derived, opts) {
       delete slot.dataset.excerpt;
     }
   }
-  applyOrder(ui.grid, order.map(i => i.el));
+  applyOrder(ui.grid, order.filter(i => !i.deprecated).map(i => i.el));
+  if (ui.depGrid) applyOrder(ui.depGrid, order.filter(i => i.deprecated).map(i => i.el));
 
   // Search box
   if (ui.q.value !== state.q) ui.q.value = state.q;
@@ -201,10 +202,24 @@ export function render(ui, items, state, derived, opts) {
   if (relevanceOpt) relevanceOpt.hidden = relevanceOpt.disabled = !state.q.trim();
   if (ui.sort.value !== sort) ui.sort.value = sort;
 
-  // Deprecated toggle
-  if (ui.legacy) ui.legacy.checked = state.showDeprecated;
+  // Deprecated section: count of matches, hidden when none match.
+  if (ui.deprecated) {
+    ui.deprecated.hidden = summary.deprecatedMatches === 0;
+    if (ui.deprecated.open !== state.showDeprecated) ui.deprecated.open = state.showDeprecated;
+    if (ui.deprecatedN) ui.deprecatedN.textContent = String(summary.deprecatedMatches);
+  }
 
   // Status (debounced live region, see main.js) and empty state
   opts.setStatus(statusText(summary, state, opts.ftStatus, opts.searching));
-  if (ui.empty) ui.empty.hidden = summary.total > 0;
+  if (ui.empty) {
+    ui.empty.hidden = summary.currentCount > 0;
+    if (ui.emptyText) {
+      ui.emptyText.textContent = summary.deprecatedMatches > 0 ? 'No current tutorials match.' : 'No tutorials match.';
+    }
+    const offer = summary.deprecatedMatches > 0 && !state.showDeprecated;
+    if (ui.emptyDeprecated) ui.emptyDeprecated.hidden = !offer;
+    if (offer && ui.emptyDeprecatedN) {
+      ui.emptyDeprecatedN.textContent = `show ${summary.deprecatedMatches} matching deprecated tutorial${summary.deprecatedMatches === 1 ? '' : 's'}`;
+    }
+  }
 }

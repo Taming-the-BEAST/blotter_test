@@ -7,42 +7,28 @@
   padding: 20px;
 }
 
-/* Tutorial grid - CSS Grid for responsive auto-fill layout */
+/* Tutorial grid: one card per <li>; min(100%, 300px) gives one column on
+   narrow screens without overflowing. */
 .tutorial-grid {
   display: grid;
-  /* min(100%, 300px): one column on narrow screens without overflowing */
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 20px;
-  margin-top: 10px;
+  gap: 1.25rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
 }
 
-/* Tutorial card hover effects */
-.tutorial-card {
-  transition: transform 0.3s, box-shadow 0.3s;
+.tutorial-grid > li {
+  display: flex;
+  min-width: 0;
 }
 
-.tutorial-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-}
-
-/* Muted Wes Anderson-inspired color palette */
-
-/* Tutorial card title - dark grey instead of bright red */
-.tutorial-card .card-title a {
-  color: #3d3d3d;
-}
-
-.tutorial-card .card-title a:hover {
-  color: #5a5a5a;
-}
-
-/* Shared metadata-badge colours used by tutorial cards (tutorials/index.html)
-   and the tutorial pages (_layouts/tutorial.html). */
-.badge-workflow   { background-color: #9a8297; color: #fff; }  /* dusty mauve  */
-.badge-package    { background-color: #6b8a9a; color: #fff; }  /* slate blue   */
-.badge-domain     { background-color: #5f9ea0; color: #fff; }  /* cadet blue   */
-.badge-deprecated { background-color: #8b8b8b; color: #fff; }  /* muted grey   */
+/* Muted Wes Anderson-inspired palette, darkened where needed so white text
+   on badges (and the workflow text on white) meets 4.5:1 contrast.
+   Shared by the listing cards and the tutorial pages (_layouts/tutorial.html). */
+.badge-workflow   { background-color: #7d6a7b; color: #fff; }  /* dusty mauve */
+.badge-package    { background-color: #56707e; color: #fff; }  /* slate blue  */
+.badge-domain     { background-color: #3f7f81; color: #fff; }  /* cadet blue  */
+.badge-deprecated { background-color: #6c757d; color: #fff; }  /* muted grey  */
 
 /* Metadata badge shape on tutorial pages. */
 .tutorial-badges .tag {
@@ -54,25 +40,226 @@
   font-weight: 600;
 }
 
-/* BEAST version badge */
-.tutorial-card .badge.bg-secondary {
-  background-color: #8b8b8b !important;
-}
-
 /* "Try" keyword chips */
 .keyword-chip {
   font-size: 0.75rem;
   padding: 0.2rem 0.6rem;
 }
 
-/* Deprecated tutorial cards - greyed out */
-.tutorial-card--legacy {
-  opacity: 0.55;
-  border-left: 3px solid #aaa;
+/* Tutorial card: the whole card is the title link (.stretched-link). */
+.tl-card {
+  width: 100%;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
 }
 
-.tutorial-card--legacy:hover {
-  opacity: 0.75;
+.tl-card:hover {
+  border-color: var(--bs-primary);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* Keyboard focus: the card shows the ring instead of the (stretched) link.
+   :focus-visible keeps it off after mouse clicks; browsers without :has()
+   fall back to the link's own outline. */
+@supports selector(:has(*)) {
+  .tl-card:has(a.stretched-link:focus-visible) {
+    border-color: var(--bs-primary);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+  }
+
+  .tl-card a.stretched-link:focus-visible {
+    outline: none;
+  }
+}
+
+/* Elements with a tooltip sit above the stretched link so the tooltip
+   can be shown (clicking them does not open the tutorial). */
+.tl-card__beast,
+.tl-card__more {
+  position: relative;
+  z-index: 2;
+  cursor: help;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .tl-card {
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .tl-card:hover {
+    transform: translateY(-3px);
+  }
+}
+
+.tl-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.1rem;
+}
+
+.tl-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.4rem;
+}
+
+.tl-card__workflow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7d6a7b;
+}
+
+.tl-card__beast {
+  margin-left: auto;
+  background: #fff;
+  color: #495057;
+  border: 1px solid #adb5bd;
+  font-weight: 600;
+}
+
+.tl-card__title {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tl-card__title a {
+  color: #3d3d3d;
+  text-decoration: none;
+}
+
+.tl-card:hover .tl-card__title a,
+.tl-card__title a:focus {
+  color: var(--bs-primary);
+}
+
+.tl-card__desc,
+.tl-card__reason,
+.tl-card__excerpt {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #555;
+}
+
+.tl-card__desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tl-card__reason {
+  font-style: italic;
+}
+
+.tl-card__authors {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6c757d;
+  /* Up to two lines: no tooltip is needed to read the authors */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tl-card__excerpt {
+  border-left: 2px solid #e9ecef;
+  padding-left: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.tl-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: auto;
+  padding-top: 0.3rem;
+}
+
+.tl-card__more {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.tl-card__domains {
+  font-size: 0.75rem;
+  color: #3f7f81;
+}
+
+.tl-card__footer {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+/* Deprecated cards: grey accent on the left (white background keeps text
+   contrast at 4.5:1 or more) */
+.tl-card--deprecated {
+  box-shadow: inset 3px 0 0 #8b8b8b;
+}
+
+.tl-card--deprecated:hover {
+  box-shadow: inset 3px 0 0 #8b8b8b, 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.tl-card--deprecated .tl-card__title a {
+  color: #555;
+}
+
+/* Deprecated section */
+.tl-deprecated {
+  margin-top: 2rem;
+  border-top: 1px solid #e7e7e7;
+  padding-top: 0.75rem;
+}
+
+.tl-deprecated__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: #555;
+}
+
+.tl-deprecated__summary::-webkit-details-marker {
+  display: none;
+}
+
+.tl-deprecated__summary:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+.tl-deprecated[open] .tl-filters__chevron {
+  transform: rotate(180deg);
+}
+
+.tl-deprecated__note {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.tl-empty {
+  text-align: center;
+  color: #6c757d;
+  margin: 2rem 0;
+}
+
+/* Narrow screens: the page container already has a gutter */
+@media (max-width: 575.98px) {
+  .tutorial-index {
+    padding: 0;
+  }
 }
 
 /* Single search box (tutorials/index.html, js/tutorials/) */
@@ -179,7 +366,12 @@
 
 .tl-filters__chevron {
   margin-left: auto;
-  transition: transform 0.2s;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tl-filters__chevron {
+    transition: transform 0.2s;
+  }
 }
 
 .tl-filters[open] .tl-filters__chevron {
@@ -275,7 +467,7 @@
 
 .tl-count {
   margin-left: auto;
-  color: #6c757d;
+  color: #5c636a;
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }

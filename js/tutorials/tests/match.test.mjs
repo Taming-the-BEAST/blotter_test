@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { versionKey, tokenize, metaScore, matchesFacets, derive, effectiveSort } from '../match.js';
 import { createState } from '../state.js';
+import { statusText } from '../view.js';
 
 function item(o) {
   const title = o.title || 'T';
@@ -71,12 +72,21 @@ test('facets: OR within, AND across; beast "none" for missing', () => {
   assert.ok(!matchesFacets(items[0], b));
 });
 
-test('derive: deprecated hidden by default and counted separately', () => {
+test('derive: deprecated matches counted separately while their section is closed', () => {
   const d = derive(items, createState(), { options: {} });
   assert.equal(d.summary.total, 3);
+  assert.equal(d.summary.currentCount, 3);
+  assert.equal(d.summary.deprecatedMatches, 1);
   assert.equal(d.summary.deprecatedHidden, 1);
+  assert.ok([...d.visible].some(i => i.slug === 'old'));   // rendered in the deprecated section
   const s = createState(); s.showDeprecated = true;
-  assert.equal(derive(items, s, { options: {} }).summary.total, 4);
+  const open = derive(items, s, { options: {} });
+  assert.equal(open.summary.total, 4);
+  assert.equal(open.summary.deprecatedHidden, 0);
+  const q = createState(); q.q = 'starbeast';
+  assert.equal(derive(items, q, { options: {} }).summary.deprecatedMatches, 1);
+  q.q = 'skyline';
+  assert.equal(derive(items, q, { options: {} }).summary.deprecatedMatches, 0);
 });
 
 test('derive: disjunctive counts ignore the own facet', () => {
@@ -128,4 +138,21 @@ test('derive: beast sort newest first, missing last', () => {
   const s = createState(); s.showDeprecated = true; s.sort = 'beast'; s.sortExplicit = true;
   const d = derive(items, s, { options: {} });
   assert.deepEqual(d.order.map(i => i.slug), ['old', 'sky', 'sc', 'intro']);
+});
+
+test('deprecated scope: counts and status follow the deprecated section', () => {
+  const opts = { options: { package: ['StarBEAST2', 'BDSKY'] } };
+  const closed = createState();
+  let d = derive(items, closed, opts);
+  assert.equal(d.counts.package.get('StarBEAST2'), 0);         // only the deprecated item has it
+  assert.equal(statusText(d.summary, closed, 'ready', false), '3 tutorials (+1 deprecated)');
+  const open = createState(); open.showDeprecated = true;
+  d = derive(items, open, opts);
+  assert.equal(d.counts.package.get('StarBEAST2'), 1);
+  assert.equal(statusText(d.summary, open, 'ready', false), '4 tutorials');
+  const q = createState(); q.q = 'starbeast';
+  d = derive(items, q, opts);
+  assert.equal(d.summary.total, 0);
+  assert.equal(d.summary.metaCount, 0);                          // deprecated match not counted while closed
+  assert.equal(d.summary.deprecatedMatches, 1);
 });

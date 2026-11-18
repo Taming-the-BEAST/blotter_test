@@ -44,7 +44,13 @@ async function start() {
     clearAll: byId('tl-clear-all'),
     resultsHeading: byId('tl-results-h'),
     sort: byId('tl-sort'),
-    legacy: byId('show-legacy'),
+    depGrid: byId('tl-deprecated-grid'),
+    deprecated: byId('tl-deprecated'),
+    deprecatedN: byId('tl-deprecated-n'),
+    emptyText: byId('tl-empty-text'),
+    emptyDeprecated: byId('tl-empty-deprecated'),
+    emptyDeprecatedN: byId('tl-empty-deprecated-n'),
+    showDeprecated: byId('tl-show-deprecated'),
     status: byId('tl-status'),
     empty: byId('tl-empty'),
     reset: byId('tl-reset'),
@@ -179,12 +185,14 @@ async function start() {
 
   // ---- events: search ----
   const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const scrollBehavior = () =>
+    (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
   ui.form.addEventListener('submit', e => {
     e.preventDefault();
     // On touch devices, Enter closes the keyboard and shows the results.
     if (coarse) {
       ui.q.blur();
-      ui.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      ui.grid.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
     }
   });
 
@@ -225,9 +233,7 @@ async function start() {
   ui.filters.addEventListener('change', e => {
     const input = e.target;
     if (!(input instanceof HTMLInputElement) || input.type !== 'checkbox') return;
-    if (input === ui.legacy) {
-      state.showDeprecated = input.checked;
-    } else if (match.FACETS.includes(input.name)) {
+    if (match.FACETS.includes(input.name)) {
       setFacet(input.name, input.value, input.checked);
     } else {
       return;
@@ -250,7 +256,6 @@ async function start() {
   if (ui.resetFilters) {
     ui.resetFilters.addEventListener('click', () => {
       clearFacets();
-      state.showDeprecated = false;
       if (ui.packageFilter) ui.packageFilter.value = '';
       update({ history: 'push' });
       ui.q.focus();
@@ -262,7 +267,7 @@ async function start() {
       ui.filters.open = false;
       if (ui.resultsHeading) {
         ui.resultsHeading.focus({ preventScroll: true });
-        ui.resultsHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        ui.resultsHeading.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
       }
     });
   }
@@ -296,6 +301,27 @@ async function start() {
     });
   }
 
+  // ---- events: deprecated section ----
+  if (ui.deprecated) {
+    // Opening or closing the section is part of the state (URL deprecated=1).
+    // render() also sets .open, which fires 'toggle' again: ignore that echo.
+    ui.deprecated.addEventListener('toggle', () => {
+      if (ui.deprecated.open === state.showDeprecated) return;
+      state.showDeprecated = ui.deprecated.open;
+      update({ history: 'push' });
+    });
+  }
+
+  if (ui.showDeprecated && ui.deprecated) {
+    ui.showDeprecated.addEventListener('click', () => {
+      state.showDeprecated = true;
+      update({ history: 'push' });
+      const summary = ui.deprecated.querySelector('summary');
+      ui.deprecated.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+      if (summary) summary.focus({ preventScroll: true });
+    });
+  }
+
   // ---- events: sort, empty-state reset, history ----
   ui.sort.addEventListener('change', () => {
     state.sort = ui.sort.value;
@@ -305,7 +331,8 @@ async function start() {
 
   if (ui.reset) {
     ui.reset.addEventListener('click', () => {
-      const keep = { sort: state.sort, sortExplicit: state.sortExplicit, fulltext: state.fulltext };
+      // Like Clear all: the deprecated section keeps its open state.
+      const keep = { sort: state.sort, sortExplicit: state.sortExplicit, fulltext: state.fulltext, showDeprecated: state.showDeprecated };
       state = { ...stateMod.createState(), ...keep };
       if (ui.packageFilter) ui.packageFilter.value = '';
       scheduleFulltext();

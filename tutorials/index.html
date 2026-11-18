@@ -121,10 +121,6 @@ categories:
         </div>
 
         <div class="tl-filters__footer">
-          <div class="form-check mb-0">
-            <input type="checkbox" class="form-check-input" id="show-legacy">
-            <label class="form-check-label" for="show-legacy">Include deprecated tutorials</label>
-          </div>
           <button type="button" class="btn btn-link btn-sm ms-auto" id="tl-reset-filters">Reset filters</button>
         </div>
         <!-- Small screens only: stays at the bottom of the screen while the panel is scrolled -->
@@ -158,92 +154,48 @@ categories:
     </div>
   </div>
 
-  <h2 class="visually-hidden" id="tl-results-h" tabindex="-1">Results</h2>
+  <section aria-labelledby="tl-results-h">
+    <h2 class="visually-hidden" id="tl-results-h" tabindex="-1">Results</h2>
 
-  <!-- Tutorial Grid -->
-  <div class="tutorial-grid" id="tutorial-grid">
     {% if site.data.tutorials %}
-    {% for tut in site.data.tutorials %}
-    {% comment %}
-    BEAST version: beast_package_minor from the generator (newest BEAST version
-    the tutorial's packages are available for), with a Liquid fallback for
-    older _data/tutorials.yml files that lack it. Only major.minor is shown.
-    {% endcomment %}
-    {% assign beast_pkg = tut.beast_package_minor %}
-    {% if beast_pkg == nil or beast_pkg == "" %}
-      {% assign beast_pkg_raw = tut.beastversion_package | append: "" | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
-      {% assign beast_pkg = beast_pkg_raw | split: "." | slice: 0, 2 | join: "." %}
-    {% endif %}
-    {% assign slug = tut.slug | default: tut.url | split: "/" | last %}
-    {% comment %} List values are '|'-separated; every value is escaped. {% endcomment %}
-    <div class="card tutorial-card {% if tut.status == 'deprecated' %}tutorial-card--legacy{% endif %}"
-         {% if tut.status == 'deprecated' %}hidden{% endif %}
-         data-slug="{{ slug | escape }}"
-         data-title="{{ tut.title | escape }}"
-         data-desc="{{ tut.description | escape }}"
-         data-authors="{{ tut.author | escape }}"
-         data-workflow="{{ tut.workflow | escape }}"
-         data-packages="{{ tut.packages | join: '|' | escape }}"
-         data-domains="{{ tut.domains | join: '|' | escape }}"
-         data-keywords="{{ tut.keywords | join: '|' | escape }}"
-         data-status="{{ tut.status | escape }}"
-         data-date="{{ tut.commits.first.date | date: '%Y%m%d' }}"
-         data-beast-pkg="{{ beast_pkg | escape }}">
+    {% assign deprecated_tuts = site.data.tutorials | where: "status", "deprecated" %}
+    <!-- Current tutorials -->
+    <ul class="tutorial-grid list-unstyled" id="tutorial-grid" role="list">
+      {% for tut in site.data.tutorials %}
+        {% unless tut.status == 'deprecated' %}{% include tutorial_card.html tut=tut %}{% endunless %}
+      {% endfor %}
+    </ul>
 
-      <div class="card-body">
-        <!-- Status and version badges -->
-        <div class="mb-2">
-          {% if tut.status == 'deprecated' %}
-          <span class="badge badge-deprecated me-1">Deprecated</span>
-          {% endif %}
-
-          {% if beast_pkg != "" %}
-          <span class="badge bg-secondary me-1" title="Packages available for BEAST {{ beast_pkg | escape }}">BEAST {{ beast_pkg | escape }}</span>
-          {% endif %}
-        </div>
-
-        <h3 class="h5 card-title"><a href="{{ tut.url | relative_url }}" class="text-decoration-none">{{ tut.title | escape }}</a></h3>
-        <p class="card-subtitle text-muted small mb-2">{{ tut.description | escape }}</p>
-        <p class="text-secondary small mb-2">{{ tut.author | escape }}</p>
-
-        <!-- Last updated -->
-        {% if tut.commits.first.date %}
-        <p class="text-muted small mb-2">
-          <i class="bi bi-clock-history" aria-hidden="true"></i> Updated {{ tut.commits.first.date | date: "%b %Y" }}
-        </p>
-        {% endif %}
-
-        <!-- Full-text excerpt slot, filled by the script -->
-        <p class="tutorial-fulltext-excerpt text-muted small mt-2 mb-2" hidden></p>
-
-        <!-- Tags: workflow, domains, packages -->
-        <div class="d-flex flex-wrap gap-1 mt-2">
-          {% if tut.workflow %}
-          <span class="badge rounded-pill badge-workflow">{{ tut.workflow | escape }}</span>
-          {% endif %}
-
-          {% for domain in tut.domains %}
-          <span class="badge rounded-pill badge-domain">{{ domain | capitalize | escape }}</span>
-          {% endfor %}
-
-          {% for package in tut.packages %}
-          <span class="badge rounded-pill badge-package">{{ package | escape }}</span>
-          {% endfor %}
-        </div>
-      </div>
+    <div id="tl-empty" class="tl-empty" hidden>
+      <p class="mb-1" id="tl-empty-text">No tutorials match.</p>
+      <p class="mb-0">
+        <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="tl-reset">Clear search and filters</button>
+        <span id="tl-empty-deprecated" hidden>
+          or <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="tl-show-deprecated"><span id="tl-empty-deprecated-n"></span></button>
+        </span>
+      </p>
     </div>
-    {% endfor %}
+
+    <!-- Deprecated tutorials: collapsed section (works without JavaScript) -->
+    {% if deprecated_tuts.size > 0 %}
+    <details class="tl-deprecated" id="tl-deprecated">
+      <summary class="tl-deprecated__summary">
+        Deprecated tutorials (<span id="tl-deprecated-n">{{ deprecated_tuts.size }}</span>)
+        <i class="bi bi-chevron-down tl-filters__chevron" aria-hidden="true"></i>
+      </summary>
+      <p class="tl-deprecated__note">These tutorials are no longer maintained; newer tutorials cover the same analyses.</p>
+      <ul class="tutorial-grid list-unstyled" id="tl-deprecated-grid" role="list">
+        {% for tut in deprecated_tuts %}{% include tutorial_card.html tut=tut %}{% endfor %}
+      </ul>
+    </details>
+    {% endif %}
     {% else %}
     <div class="alert alert-warning text-center p-4">
       <p class="mb-2">No tutorials found. Please run the preprocessing script first:</p>
       <code>ruby _scripts/update-and-preprocess.rb</code>
     </div>
     {% endif %}
-  </div>
-
-  <p id="tl-empty" class="text-muted text-center my-4" hidden>
-    No tutorials match. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="tl-reset">Clear search and filters</button>
-  </p>
+  </section>
 </div>
 
 <hr>

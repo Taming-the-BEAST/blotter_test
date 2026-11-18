@@ -100,20 +100,29 @@ export function derive(items, state, options = {}) {
     info.set(item, { meta, hit, textOk, inScope });
   }
 
+  // `visible`: every matching card, current and deprecated. Deprecated cards
+  // live in their own collapsed section; they count towards the totals only
+  // while that section is open (state.showDeprecated).
   const visible = new Set();
+  let total = 0;
+  let currentCount = 0;
   let metaCount = 0;
   let textOnlyCount = 0;
-  let deprecatedHidden = 0;
+  let deprecatedMatches = 0;
   for (const item of items) {
     const i = info.get(item);
     if (!i.textOk || !matchesFacets(item, state)) continue;
-    if (!i.inScope) { deprecatedHidden++; continue; }
     visible.add(item);
+    if (item.deprecated) deprecatedMatches++;
+    else currentCount++;
+    if (!i.inScope) continue;
+    total++;
     if (tokens.length) {
       if (i.meta >= 0) metaCount++;
       else textOnlyCount++;
     }
   }
+  const deprecatedHidden = state.showDeprecated ? 0 : deprecatedMatches;
 
   // Disjunctive counts: how many cards an option would show if it were the
   // only selection in its facet, with everything else applied.
@@ -164,6 +173,6 @@ export function derive(items, state, options = {}) {
     counts,
     excerpts,
     sort,
-    summary: { total: visible.size, metaCount, textOnlyCount, deprecatedHidden },
+    summary: { total, currentCount, metaCount, textOnlyCount, deprecatedMatches, deprecatedHidden },
   };
 }
