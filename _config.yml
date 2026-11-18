@@ -49,6 +49,7 @@ exclude:
   - "*.backup"
   - "*.bib"
   - "TUTORIALS_REDESIGN_PLAN.md"
+  - "js/tutorials/tests"
   - "github.token"
   - "venv"
   - "venv/**"

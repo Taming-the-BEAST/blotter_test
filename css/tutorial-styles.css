@@ -58,11 +58,6 @@
   background-color: #8b8b8b !important;
 }
 
-/* Prerequisites badge */
-.tutorial-card .badge.bg-light {
-  border: 1px solid #ddd;
-}
-
 /* Filter and sort button active state override */
 [data-filter].active,
 [data-sort].active {
@@ -74,13 +69,6 @@
 /* Filter buttons that would leave no results */
 [data-filter].filter-dead {
   opacity: 0.4;
-}
-
-/* Search mode toggle */
-.btn-check:checked + .btn-outline-secondary {
-  background-color: #6b8a9a;
-  border-color: #6b8a9a;
-  color: white;
 }
 
 /* Keyword chips */
@@ -144,16 +132,6 @@
   padding: 0.2rem 0.55rem;
 }
 
-/* Search-mode toggle: chip font size, bold, tighter than the chips. */
-.bg-light .search-mode-toggle .btn {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.45rem;
-  /* Stretched to the search input's height by the flex row, so centre the label. */
-  display: flex;
-  align-items: center;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .tutorial-grid {
@@ -165,26 +143,65 @@
   }
 }
 
-/* Clear button inside the search boxes */
-#tutorial-search,
-#fulltext-search {
-  padding-right: 1.75rem;
+/* Single search box (tutorials/index.html, js/tutorials/) */
+.tl-search__box {
+  position: relative;
 }
 
-.btn-clear-search {
+.tl-search__icon {
   position: absolute;
-  right: 0.3rem;
+  left: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
-  padding: 0 0.25rem;
+  color: #6c757d;
+  pointer-events: none;
+}
+
+.tl-search__box .form-control {
+  min-height: 48px;
+  font-size: 1rem;              /* 16px: no zoom on focus in iOS Safari */
+  padding-left: 2.4rem;
+  padding-right: 2.4rem;
+}
+
+.tl-search__box .form-control:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Hide the browser's own clear button; ours is .tl-search__clear */
+.tl-search__box input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.tl-search__clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.4rem;
   border: 0;
   background: none;
   line-height: 1;
-  font-size: 1.1rem;
-  font-weight: 700;
   color: #6c757d;
 }
 
-.btn-clear-search:hover {
+.tl-search__clear:hover,
+.tl-search__clear:focus-visible {
   color: #3d3d3d;
+}
+
+.tl-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Highlighted words in full-text excerpts */
+.tutorial-fulltext-excerpt mark {
+  background: rgba(221, 45, 45, 0.15);
+  color: inherit;
+  padding: 0 0.1em;
 }

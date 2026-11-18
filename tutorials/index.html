@@ -9,116 +9,87 @@ categories:
 {% assign all_packages = site.data.tutorials | map: "packages" | compact | flatten | uniq | sort %}
 {% assign all_domains = site.data.tutorials | map: "domains" | compact | flatten | uniq | sort %}
 
-<div class="tutorial-index" data-baseurl="{{ site.baseurl }}">
-  <!-- Filter Controls -->
-  <div class="bg-light p-3 rounded mb-3">
+<div class="tutorial-index" data-pagefind-url="{{ '/pagefind/pagefind.js' | relative_url }}">
 
-    <!-- Search -->
-    <div class="filter-row mb-2">
-      <label for="tutorial-search" class="form-label fw-semibold filter-label">Search:</label>
-      <div class="filter-controls">
-        <div class="d-flex gap-2 align-items-stretch">
-          <div class="btn-group btn-group-sm flex-shrink-0 search-mode-toggle" role="group" aria-label="Search mode">
-            <input type="radio" class="btn-check" name="search-mode" id="search-mode-keyword" value="keyword" checked>
-            <label class="btn btn-outline-secondary" for="search-mode-keyword">Keyword</label>
-            <input type="radio" class="btn-check" name="search-mode" id="search-mode-fulltext" value="fulltext">
-            <label class="btn btn-outline-secondary" for="search-mode-fulltext">Full-Text</label>
-          </div>
-          <div id="keyword-search-container" class="flex-grow-1 min-w-0 position-relative">
-            <input type="text" id="tutorial-search" class="form-control form-control-sm" placeholder="Search by title, author, keywords, packages..." list="keyword-suggestions" autocomplete="off">
-            <datalist id="keyword-suggestions">
-              {% comment %} Collect all searchable terms {% endcomment %}
-              {% assign all_keywords = site.data.tutorials | map: "keywords" | compact | flatten | uniq | sort %}
-              {% for keyword in all_keywords %}
-              <option value="{{ keyword }}">
-              {% endfor %}
-              {% for pkg in all_packages %}
-              <option value="{{ pkg }}">
-              {% endfor %}
-              {% for domain in all_domains %}
-              <option value="{{ domain }}">
-              {% endfor %}
-            </datalist>
-            <button type="button" class="btn-clear-search d-none" id="keyword-clear" aria-label="Clear search">&times;</button>
-          </div>
-          <div id="fulltext-search-container" class="flex-grow-1 min-w-0 position-relative" style="display: none;">
-            <input type="text" id="fulltext-search" class="form-control form-control-sm" placeholder="Search tutorial content..." autocomplete="off">
-            <button type="button" class="btn-clear-search d-none" id="fulltext-clear" aria-label="Clear search">&times;</button>
-          </div>
-        </div>
+  <noscript>
+    <p class="text-muted small">Enable JavaScript to search and filter the tutorials.</p>
+  </noscript>
 
-        <!-- Suggestions / status: full control width, no indent under the toggle -->
-        <div id="keyword-chips-row" class="mt-1">
-          <span id="keyword-chips" class="d-inline-flex flex-wrap gap-1">
-            {% comment %} Fixed static chips + top dynamic keywords from _data/popular_keywords.yml (skipping statics). {% endcomment %}
-            {% assign static_keywords = "coalescent,birth-death,molecular clock,phylogeography" | split: "," %}
-            {% assign max_dynamic_keywords = 4 %}
-            {% for kw in static_keywords %}
-            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw }}">{{ kw }}</button>
-            {% endfor %}
-            {% assign shown = 0 %}
-            {% for kw in site.data.popular_keywords %}
-              {% if shown >= max_dynamic_keywords %}{% break %}{% endif %}
-              {% unless static_keywords contains kw %}
-            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw }}">{{ kw }}</button>
-                {% assign shown = shown | plus: 1 %}
-              {% endunless %}
-            {% endfor %}
-          </span>
-        </div>
-        <div id="fulltext-status" class="text-muted small mt-1" style="display: none;" aria-live="polite"></div>
+  <!-- Controls: hidden until the script has started (the page shows all tutorials without it). -->
+  <div class="bg-light p-3 rounded mb-3" id="tl-controls" hidden data-tl-control>
+
+    <!-- Search: one box for titles, tags and tutorial text -->
+    <form class="tl-search mb-2" role="search" id="tl-search-form">
+      <label class="visually-hidden" for="tl-q">Search tutorials</label>
+      <div class="tl-search__box">
+        <i class="bi bi-search tl-search__icon" aria-hidden="true"></i>
+        <input type="search" id="tl-q" name="q" class="form-control"
+               placeholder="Search titles, topics, packages and tutorial text..."
+               autocomplete="off" spellcheck="false" aria-describedby="tl-status">
+        <button type="button" class="tl-search__clear" id="tl-clear" aria-label="Clear search" hidden>
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
       </div>
-    </div>
+    </form>
 
-    <!-- Sort options -->
-    <div class="filter-row mb-2">
-      <label class="form-label fw-semibold filter-label">Sort by:</label>
-      <div class="filter-controls d-flex flex-wrap gap-1">
-        <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-sort="date">Recently updated</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-sort="title">Title (A-Z)</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-sort="beastversion">BEAST version</button>
-      </div>
+    <!-- Suggestions, shown while the search box is empty -->
+    <div id="tl-try" class="tl-try mb-2">
+      <span class="text-muted small me-1">Try:</span>
+      {% comment %} Fixed static chips + top dynamic keywords from _data/popular_keywords.yml (skipping statics). {% endcomment %}
+      {% assign static_keywords = "coalescent,birth-death,molecular clock,phylogeography" | split: "," %}
+      {% assign max_dynamic_keywords = 4 %}
+      {% for kw in static_keywords %}
+      <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw | escape }}">{{ kw | escape }}</button>
+      {% endfor %}
+      {% assign shown = 0 %}
+      {% for kw in site.data.popular_keywords %}
+        {% if shown >= max_dynamic_keywords %}{% break %}{% endif %}
+        {% unless static_keywords contains kw %}
+      <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill keyword-chip" data-keyword="{{ kw | escape }}">{{ kw | escape }}</button>
+          {% assign shown = shown | plus: 1 %}
+        {% endunless %}
+      {% endfor %}
     </div>
 
     <!-- Workflow filter -->
     <div class="filter-row mb-2">
-      <label class="form-label fw-semibold filter-label">Workflow:</label>
-      <div class="filter-controls d-flex flex-wrap gap-1">
-        <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="workflow" data-value="all">All</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Getting started">Getting started</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Basic workflow">Basic workflow</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Advanced analysis">Advanced analysis</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Troubleshooting">Troubleshooting</button>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="Validation">Validation</button>
+      <span class="form-label fw-semibold filter-label" id="tl-label-workflow">Workflow:</span>
+      <div class="filter-controls d-flex flex-wrap gap-1" role="group" aria-labelledby="tl-label-workflow">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="all">All</button>
+        {% assign workflows = "Getting started|Basic workflow|Advanced analysis|Troubleshooting|Validation" | split: "|" %}
+        {% for wf in workflows %}
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="workflow" data-value="{{ wf }}">{{ wf }}</button>
+        {% endfor %}
       </div>
     </div>
 
     <!-- Domain filter (dynamic) -->
     {% if all_domains.size > 0 %}
     <div class="filter-row mb-2">
-      <label class="form-label fw-semibold filter-label">Domain:</label>
-      <div class="filter-controls d-flex flex-wrap gap-1">
-        <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="domain" data-value="all">All</button>
+      <span class="form-label fw-semibold filter-label" id="tl-label-domain">Domain:</span>
+      <div class="filter-controls d-flex flex-wrap gap-1" role="group" aria-labelledby="tl-label-domain">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="all">All</button>
         {% for domain in all_domains %}
-        <button class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain }}">{{ domain | capitalize }}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="domain" data-value="{{ domain | escape }}">{{ domain | capitalize | escape }}</button>
         {% endfor %}
       </div>
     </div>
     {% endif %}
 
-    <!-- Package filter (ranked by tutorial count; top N shown, rest behind "Show all") -->
-    {% assign ranked_packages = site.data.popular_packages %}
+    <!-- Package filter: ranked by tutorial count when _data/popular_packages.yml exists,
+         otherwise alphabetical; top N shown, the rest behind "Show all". -->
+    {% assign ranked_packages = site.data.popular_packages | default: all_packages %}
     {% if ranked_packages.size > 0 %}
     {% assign max_packages = 5 %}
     <div class="filter-row mb-2">
-      <label class="form-label fw-semibold filter-label">Package:</label>
-      <div class="filter-controls d-flex flex-wrap gap-1">
-        <button class="btn btn-sm btn-outline-secondary rounded-pill active" data-filter="package" data-value="all">All</button>
+      <span class="form-label fw-semibold filter-label" id="tl-label-package">Package:</span>
+      <div class="filter-controls d-flex flex-wrap gap-1" role="group" aria-labelledby="tl-label-package">
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-filter="package" data-value="all">All</button>
         {% for pkg in ranked_packages %}
-        <button class="btn btn-sm btn-outline-secondary rounded-pill{% if forloop.index0 >= max_packages %} package-extra d-none{% endif %}" data-filter="package" data-value="{{ pkg }}">{{ pkg }}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill{% if forloop.index0 >= max_packages %} package-extra d-none{% endif %}" data-filter="package" data-value="{{ pkg | escape }}">{{ pkg | escape }}</button>
         {% endfor %}
         {% if ranked_packages.size > max_packages %}
-        <button type="button" class="btn btn-sm rounded-pill border-0 text-secondary" id="package-show-all" data-expanded="false">Show all ({{ ranked_packages.size }})</button>
+        <button type="button" class="btn btn-sm rounded-pill border-0 text-secondary" id="package-show-all" aria-expanded="false" data-total="{{ ranked_packages.size }}">Show all ({{ ranked_packages.size }})</button>
         {% endif %}
       </div>
     </div>
@@ -131,25 +102,32 @@ categories:
     </div>
   </div>
 
-  <div class="text-muted small mb-2">
-    <span id="tutorial-count">{% if site.data.tutorials %}{{ site.data.tutorials | size }}{% else %}0{% endif %}</span> tutorials found
+  <!-- Result status and sort -->
+  <div class="tl-statusbar d-flex flex-wrap align-items-center gap-2 mb-2">
+    <div id="tl-status" class="text-muted small me-auto" role="status" aria-live="polite" aria-atomic="true">
+      {% if site.data.tutorials %}{{ site.data.tutorials | size }}{% else %}0{% endif %} tutorials
+    </div>
+    <div class="d-flex align-items-center gap-1" hidden data-tl-control>
+      <label for="tl-sort" class="text-muted small mb-0">Sort:</label>
+      <select id="tl-sort" class="form-select form-select-sm w-auto">
+        <option value="relevance">Relevance</option>
+        <option value="updated">Recently updated</option>
+        <option value="title">Title (A-Z)</option>
+        <option value="beast">BEAST version (newest)</option>
+      </select>
+    </div>
   </div>
+
+  <h2 class="visually-hidden">Results</h2>
 
   <!-- Tutorial Grid -->
   <div class="tutorial-grid" id="tutorial-grid">
     {% if site.data.tutorials %}
     {% for tut in site.data.tutorials %}
     {% comment %}
-    Show only major.minor: patch levels are inconsistent across tutorials
-    ('2.7.7', '2.7', '2.7.x') and rarely matter. All three render as '2.7'.
-    Range prefixes ('>= 2.7') are dropped too - they claim compatibility the
-    author cannot have tested.
-    {% endcomment %}
-    {% assign beast_raw = tut.beastversion_tutorial | default: tut.beastversion | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | strip %}
-    {% assign beast_display = beast_raw | split: "." | slice: 0, 2 | join: "." %}
-    {% comment %}
-    BEAST version filter data: beast_package_minor from the generator, with a
-    Liquid fallback for older _data/tutorials.yml files that lack it.
+    BEAST version: beast_package_minor from the generator (newest BEAST version
+    the tutorial's packages are available for), with a Liquid fallback for
+    older _data/tutorials.yml files that lack it. Only major.minor is shown.
     {% endcomment %}
     {% assign beast_pkg = tut.beast_package_minor %}
     {% if beast_pkg == nil or beast_pkg == "" %}
@@ -157,18 +135,20 @@ categories:
       {% assign beast_pkg = beast_pkg_raw | split: "." | slice: 0, 2 | join: "." %}
     {% endif %}
     {% assign slug = tut.slug | default: tut.url | split: "/" | last %}
+    {% comment %} List values are '|'-separated; every value is escaped. {% endcomment %}
     <div class="card tutorial-card {% if tut.status == 'deprecated' %}tutorial-card--legacy{% endif %}"
+         {% if tut.status == 'deprecated' %}hidden{% endif %}
          data-slug="{{ slug | escape }}"
-         data-beast-pkg="{{ beast_pkg | escape }}"
-         data-workflow="{{ tut.workflow }}"
-         data-packages="{{ tut.packages | join: ',' }}"
-         data-domains="{{ tut.domains | join: ',' }}"
-         data-keywords="{{ tut.keywords | join: ',' }}"
-         data-status="{{ tut.status }}"
-         data-title="{{ tut.title }}"
+         data-title="{{ tut.title | escape }}"
+         data-desc="{{ tut.description | escape }}"
+         data-authors="{{ tut.author | escape }}"
+         data-workflow="{{ tut.workflow | escape }}"
+         data-packages="{{ tut.packages | join: '|' | escape }}"
+         data-domains="{{ tut.domains | join: '|' | escape }}"
+         data-keywords="{{ tut.keywords | join: '|' | escape }}"
+         data-status="{{ tut.status | escape }}"
          data-date="{{ tut.commits.first.date | date: '%Y%m%d' }}"
-         data-beastversion="{{ beast_display }}"
-         data-search="{{ tut.title | downcase }} {{ tut.description | downcase }} {{ tut.author | downcase }} {{ tut.packages | join: ' ' | downcase }} {{ tut.keywords | join: ' ' | downcase }}">
+         data-beast-pkg="{{ beast_pkg | escape }}">
 
       <div class="card-body">
         <!-- Status and version badges -->
@@ -177,49 +157,38 @@ categories:
           <span class="badge badge-deprecated me-1">Deprecated</span>
           {% endif %}
 
-          {% if beast_display != "" %}
-          <span class="badge bg-secondary me-1">BEAST {{ beast_display }}</span>
+          {% if beast_pkg != "" %}
+          <span class="badge bg-secondary me-1" title="Packages available for BEAST {{ beast_pkg | escape }}">BEAST {{ beast_pkg | escape }}</span>
           {% endif %}
         </div>
 
-        <h5 class="card-title"><a href="{{ site.baseurl }}{{ tut.url }}" class="text-decoration-none">{{ tut.title }}</a></h5>
-        <p class="card-subtitle text-muted small mb-2">{{ tut.description }}</p>
-        <p class="text-secondary small mb-2">{{ tut.author }}</p>
+        <h3 class="h5 card-title"><a href="{{ tut.url | relative_url }}" class="text-decoration-none">{{ tut.title | escape }}</a></h3>
+        <p class="card-subtitle text-muted small mb-2">{{ tut.description | escape }}</p>
+        <p class="text-secondary small mb-2">{{ tut.author | escape }}</p>
 
         <!-- Last updated -->
         {% if tut.commits.first.date %}
         <p class="text-muted small mb-2">
-          <i class="bi bi-clock-history"></i> Updated {{ tut.commits.first.date | date: "%b %Y" }}
+          <i class="bi bi-clock-history" aria-hidden="true"></i> Updated {{ tut.commits.first.date | date: "%b %Y" }}
         </p>
         {% endif %}
 
-        <!-- Prerequisites -->
-        {% if tut.prerequisites %}
-        <p class="small mb-2">
-          <span class="text-muted">Prerequisites:</span>
-          {% for prereq in tut.prerequisites %}
-          <a href="{{ site.baseurl }}/tutorials/{{ prereq | replace: ' ', '-' }}/" class="badge bg-light text-dark text-decoration-none">{{ prereq }}</a>
-          {% endfor %}
-        </p>
-        {% endif %}
+        <!-- Full-text excerpt slot, filled by the script -->
+        <p class="tutorial-fulltext-excerpt text-muted small mt-2 mb-2" hidden></p>
 
         <!-- Tags: workflow, domains, packages -->
         <div class="d-flex flex-wrap gap-1 mt-2">
           {% if tut.workflow %}
-          <span class="badge rounded-pill badge-workflow">{{ tut.workflow }}</span>
+          <span class="badge rounded-pill badge-workflow">{{ tut.workflow | escape }}</span>
           {% endif %}
 
-          {% if tut.domains %}
           {% for domain in tut.domains %}
-          <span class="badge rounded-pill badge-domain">{{ domain | capitalize }}</span>
+          <span class="badge rounded-pill badge-domain">{{ domain | capitalize | escape }}</span>
           {% endfor %}
-          {% endif %}
 
-          {% if tut.packages %}
           {% for package in tut.packages %}
-          <span class="badge rounded-pill badge-package">{{ package }}</span>
+          <span class="badge rounded-pill badge-package">{{ package | escape }}</span>
           {% endfor %}
-          {% endif %}
         </div>
       </div>
     </div>
@@ -231,10 +200,14 @@ categories:
     </div>
     {% endif %}
   </div>
+
+  <p id="tl-empty" class="text-muted text-center my-4" hidden>
+    No tutorials match. <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="tl-reset">Clear search and filters</button>
+  </p>
 </div>
 
 <hr>
 {% include citation.html %}
 
-<!-- Tutorial filter (uses Pagefind API for full-text search) -->
-<script type="module" src="{{ '/js/tutorial-filter.js' | relative_url }}"></script>
+<!-- Tutorial search and filters (Pagefind full-text search is loaded on demand) -->
+<script type="module" src="{{ '/js/tutorials/main.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
