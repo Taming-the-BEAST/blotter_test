@@ -236,7 +236,7 @@ module Tutorials
 				tutorial_author = tutorial_header["author"]
 				tutorial_beast  = tutorial_header["beastversion_tutorial"]   # legacy beastversion handled in resolve_aliases
 				tutorial_beast_package = tutorial_header["beastversion_package"]
-				normalise_minor(tutorial_beast, repo, "beastversion_tutorial")   # only for its warnings
+				tutorial_beast_minor = normalise_minor(tutorial_beast, repo, "beastversion_tutorial")
 				tutorial_beast_package_minor = normalise_minor(tutorial_beast_package, repo, "beastversion_package")
 				tutorial_workflow = tutorial_header["workflow"]   # legacy tutorial_type handled in resolve_aliases
 				tutorial_packages = canonical_packages(repo, Array(tutorial_header["packages"]).reject { |v| v.to_s.strip.empty? })
@@ -320,9 +320,12 @@ module Tutorials
 					"beastversion_tutorial" => tutorial_beast,
 					"beastversion_package" => tutorial_beast_package,
 					# Derived fields for the tutorial listing (_includes/tutorial_card.html):
-					# beast_package_minor drives the BEAST version filter, sort and badge;
-					# updated is the card's "Updated" date.
+					# listing_beast_minor drives the BEAST version filter, sort and badge: the
+					# package version, else the version the tutorial was written for
+					# (listing_beast_source says which); updated is the card's "Updated" date.
 					"beast_package_minor" => tutorial_beast_package_minor,
+					"listing_beast_minor" => tutorial_beast_package_minor || tutorial_beast_minor,
+					"listing_beast_source" => tutorial_beast_package_minor ? "package" : (tutorial_beast_minor ? "tutorial" : nil),
 					"slug" => reponame,
 					"folder" => reponame,
 					"updated" => (tutorial_commits.first && tutorial_commits.first["date"].respond_to?(:strftime)) ? tutorial_commits.first["date"].strftime("%Y-%m-%d") : nil,
@@ -355,11 +358,11 @@ module Tutorials
 		end
 		tutorial_data.sort_by! { |t| latest.(t) }.reverse!
 			
-		missing = tutorial_data.select { |t| t["beast_package_minor"].nil? }.map { |t| t["repo"] }
+		missing = tutorial_data.select { |t| t["beast_package_minor"].nil? }
 		unless missing.empty?
 			puts "INFO: #{missing.size} of #{tutorial_data.size} tutorials have no beastversion_package " \
-				"(shown as 'Not specified' in the BEAST version filter):"
-			missing.each { |r| puts "\t#{r}" }
+				"(the listing uses beastversion_tutorial instead; 'Not specified' if neither is set):"
+			missing.each { |t| puts "\t#{t["repo"]}#{t["listing_beast_minor"] ? " (written for #{t["listing_beast_minor"]})" : " (no version)"}" }
 		end
 
 		return tutorial_data

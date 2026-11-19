@@ -8,13 +8,24 @@ else inside the card is interactive.
 {% endcomment %}
 {% assign tut = include.tut %}
 {% comment %}
-BEAST version: beast_package_minor from the generator (newest BEAST version
-the tutorial's packages are available for), with a Liquid fallback for older
-_data/tutorials.yml files that lack it. Only major.minor is shown.
+BEAST version (badge, filter and sort): the newest BEAST version the
+tutorial's packages are available for (beastversion_package), else the
+version the tutorial was written for (beastversion_tutorial, legacy
+beastversion). Taken from the generator's listing_beast_minor; for older
+_data/tutorials.yml files without it, from the data's raw fields and then
+from the tutorial's own README front matter. Only major.minor is shown.
 {% endcomment %}
-{% assign beast_pkg = tut.beast_package_minor %}
-{% if beast_pkg == nil or beast_pkg == "" %}
-  {% assign beast_pkg_raw = tut.beastversion_package | append: "" | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | remove: "=" | remove: "v" | remove: "V" | strip %}
+{% assign beast_pkg = tut.listing_beast_minor | append: "" %}
+{% assign beast_src = tut.listing_beast_source | default: "package" %}
+{% if beast_pkg == "" %}
+  {% assign readme = site.pages | where: "url", tut.url | first %}
+  {% assign beast_src = "package" %}
+  {% assign beast_pkg_raw = tut.beast_package_minor | default: tut.beastversion_package | default: readme.beastversion_package | append: "" %}
+  {% if beast_pkg_raw == "" %}
+    {% assign beast_src = "tutorial" %}
+    {% assign beast_pkg_raw = tut.beastversion_tutorial | default: tut.beastversion | default: readme.beastversion_tutorial | default: readme.beastversion | append: "" %}
+  {% endif %}
+  {% assign beast_pkg_raw = beast_pkg_raw | remove: ">=" | remove: ">" | remove: "~" | remove: "^" | remove: "=" | remove: "v" | remove: "V" | strip %}
   {% assign beast_pkg = beast_pkg_raw | split: "." | slice: 0, 2 | join: "." %}
 {% endif %}
 {% assign slug = tut.slug | default: tut.url | split: "/" | last %}
@@ -40,7 +51,7 @@ _data/tutorials.yml files that lack it. Only major.minor is shown.
       <div class="tl-card__meta">
         {% if deprecated %}<span class="badge badge-deprecated">Deprecated</span>{% endif %}
         {% if tut.workflow %}<span class="tl-card__workflow">{{ tut.workflow | escape }}</span>{% endif %}
-        {% if beast_pkg != "" %}<span class="badge tl-card__beast" title="Packages available for BEAST {{ beast_pkg | escape }}">BEAST {{ beast_pkg | escape }}</span>{% endif %}
+        {% if beast_pkg != "" %}<span class="badge tl-card__beast" title="{% if beast_src == 'tutorial' %}Written for BEAST {{ beast_pkg | escape }}{% else %}Packages available for BEAST {{ beast_pkg | escape }}{% endif %}">BEAST {{ beast_pkg | escape }}</span>{% endif %}
       </div>
 
       <h3 class="h5 tl-card__title" id="t-{{ slug | escape }}">
@@ -66,9 +77,9 @@ _data/tutorials.yml files that lack it. Only major.minor is shown.
         {% assign rest = tut.packages | slice: max_pkgs, tut.packages.size | join: ', ' %}
         <span class="badge rounded-pill tl-card__more" title="{{ rest | escape }}">+{{ more }}<span class="visually-hidden"> more: {{ rest | escape }}</span></span>
         {% endif %}
-        {% if tut.domains.size > 0 %}
-        <span class="tl-card__domains">{% for domain in tut.domains %}{{ domain | capitalize | escape }}{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
-        {% endif %}
+        {% for domain in tut.domains %}
+        <span class="badge rounded-pill badge-domain">{{ domain | capitalize | escape }}</span>
+        {% endfor %}
       </div>
 
       {% if updated %}

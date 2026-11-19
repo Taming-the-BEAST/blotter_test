@@ -69,7 +69,7 @@ categories:
           <!-- BEAST version: options are built by the script from the cards' data-beast-pkg -->
           <fieldset class="tl-facet" data-facet="beast">
             <legend class="tl-facet__legend">BEAST version</legend>
-            <p class="tl-facet__hint">Newest BEAST&nbsp;2 version the tutorial's packages are available for.</p>
+            <p class="tl-facet__hint">Newest BEAST&nbsp;2 version the tutorial's packages are available for, otherwise the version it was written for.</p>
             <div class="tl-facet__options" id="tl-beast-options"></div>
           </fieldset>
 
@@ -103,7 +103,7 @@ categories:
           {% if all_domains.size > 0 %}
           <fieldset class="tl-facet" data-facet="domain">
             <legend class="tl-facet__legend">Domain</legend>
-            <div class="tl-facet__options">
+            <div class="tl-facet__options tl-facet__options--scroll">
               {% for domain in all_domains %}
               <label class="form-check tl-opt">
                 <input class="form-check-input" type="checkbox" name="domain" value="{{ domain | escape }}">
@@ -193,7 +193,8 @@ categories:
     {% if deprecated_tuts.size > 0 %}
     <details class="tl-deprecated" id="tl-deprecated">
       <summary class="tl-deprecated__summary">
-        Deprecated tutorials (<span id="tl-deprecated-n">{{ deprecated_tuts.size }}</span>)
+        {% comment %} One span: the summary is a flex row, so loose text and the number would be spaced apart by its gap. {% endcomment %}
+        <span>Deprecated tutorials (<span id="tl-deprecated-n">{{ deprecated_tuts.size }}</span>)</span>
         <i class="bi bi-chevron-down tl-filters__chevron" aria-hidden="true"></i>
       </summary>
       <p class="tl-deprecated__note">These tutorials are no longer maintained; newer tutorials cover the same analyses.</p>

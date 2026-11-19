@@ -198,7 +198,7 @@ The repositories whose tutorials are included in the build are listed under `tut
   It reports errors (for example an unknown workflow or domain, or a version that cannot be read) and warnings (legacy field names, unquoted versions, version ranges, missing recommended fields).
 
   Notes for tutorial metadata:
-  - The **BEAST version** filter on the tutorial listing uses `beastversion_package`: the newest BEAST 2 version the tutorial's packages are available for. Tutorials without it are listed under "Not specified".
+  - The **BEAST version** shown on the tutorial cards, and used by the BEAST version filter and sort, is `beastversion_package`: the newest BEAST 2 version the tutorial's packages are available for. Tutorials without it use `beastversion_tutorial` (the version the tutorial was written for) instead; the card's tooltip says which. Tutorials with neither are listed under "Not specified".
   - Write versions as quoted strings (`'2.7'`, `'2.7.x'`), not as numbers: an unquoted `2.10` is read as `2.1`.
   - A field in the tutorial's own `README.md` front matter takes precedence. `tutorials_metadata.yml` only fills in fields a tutorial does not define yet.
   - The current BEAST release is set by `beast_current` in `_config.yml` and marked "current" in the filter.
